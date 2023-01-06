@@ -1,0 +1,15 @@
+scipy
+numpy
+matplotlib
+numba
+joblib
+rich
+Sphinx
+sphinx-rtd-theme
+sphinx-gallery
+sphinxcontrib-napoleon
+sphinx-autodoc-typehints
+nbsphinx
+jinja2==3.0.3
+jupyter-sphinx
+pythreejs
