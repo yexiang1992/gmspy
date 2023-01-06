@@ -2,7 +2,7 @@
 
 ``gmspy`` is a python package for dealing with ``ground motions time-histories`` caused by earthquakes, including various ``intensity measures (IMs)``, ``elastic response spectra``, ``constant ductility response spectrum``, ``filtering``, etc.
 
-To use, install `gmspy` from [gmspy-PyPI]():
+To use, install `gmspy` from [gmspy-PyPI](https://pypi.org/project/gmspy/):
 
 ```python
 pip install --upgrade gmspy

@@ -10,7 +10,7 @@ Welcome to gmspy's documentation!
 including various ``intensity measures (IMs)``, ``elastic response spectra``, ``constant ductility response spectrum``, ``filtering``, etc.
 
 To use, install `gmspy` from 
-`gmspy-PyPI <https://pypi.org/project/opstool/>`_:
+`gmspy-PyPI <https://pypi.org/project/gmspy/>`_:
 
 .. code-block:: console
 
