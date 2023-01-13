@@ -1,23 +1,24 @@
 r"""
-.. _ref_ex_simple:
+.. _ref_ex_filtering:
 
 Filtering
 ---------------------
 
-Filtering is employed to remove unwanted frequency components from a given signal;
-(i) lowpass filtering suppresses frequencies that are higher than a user-defined cut-off frequency (Freq1),
-(ii) highpass filtering allows frequencies that are higher than the cut-off frequency (Freq1) to pass through,
-(iii) bandpass filtering allows signals within a given frequency range (Freq1 to Freq2) bandwidth to pass through and
-(iv) bandstop filtering suppresses signals within the given frequency range (Freq1 to Freq2)-
+``Filtering`` is employed to remove unwanted frequency components from a given signal;
+(i) ``lowpass`` filtering suppresses frequencies that are higher than a user-defined cut-off frequency (Freq1),
+(ii) ``highpass`` filtering allows frequencies that are higher than the cut-off frequency (Freq1) to pass through,
+(iii) ``bandpass`` filtering allows signals within a given frequency range (Freq1 to Freq2) bandwidth to pass through and
+(iv) ``bandstop`` filtering suppresses signals within the given frequency range (Freq1 to Freq2)-
 note that Freq2 cannot be higher than 1/2 of the record's time-step frequency.
 
-To create any of the above four filtering configurations, three classical infinite-impulse-response (IIR)
-filter types are available in SeismoSignal: Butterworth, Chebyshev and Bessel filters.
+To create any of the above four filtering configurations, three classical ``infinite-impulse-response (IIR)``
+filter types are available in ``gmspy``: ``Butterworth``, ``Chebyshev`` and ``Bessel`` filters.
+
+see :func:`gmspy.freq_filt`.
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import cumulative_trapezoid
 
 import gmspy as gm
 

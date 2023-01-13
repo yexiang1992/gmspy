@@ -39,8 +39,6 @@ class SeismoGM:
         self.acc = np.array(acc)
         self.nacc = len(acc)
         self.time = np.arange(self.nacc) * dt
-        self.vel = cumulative_trapezoid(self.acc, self.time, initial=0)
-        self.disp = cumulative_trapezoid(self.vel, self.time, initial=0)
 
         # Arias IMs
         self.Arias = None
@@ -51,23 +49,22 @@ class SeismoGM:
         self.Spec_sp = None
 
         # default units
-        self.acc_unit = None
+        self.acc_unit = unit
         self.vel_unit = None
         self.disp_unit = None
+        self.acc_factor = None
         self.vel_factor = None
         self.disp_factor = None
         self.unit_factors = {
             "g-g": 1.0,
             "g-m": 9.81, "g-cm": 981, "g-mm": 9810, "g-in": 9.81 * 39.3701, "g-ft": 9.81 * 3.28084,
-            "m-m": 1, "m-cm": 100, "m-mm": 1000, "m-in": 39.3701, "m-ft": 3.28084,
-            "cm-m": 0.01, "cm-cm": 1, "cm-mm": 10, "cm-in": 0.393701, "cm-ft": 0.0328084,
-            "mm-m": 0.001, "mm-cm": 0.1, "mm-mm": 1, "mm-in": 0.0393701, "mm-ft": 0.00328084,
-            "in-m": 0.0254, "in-cm": 2.54, "in-mm": 25.4, "in-in": 1, "in-ft": 0.0833333,
-            "ft-m": 0.3048, "ft-cm": 30.48, "ft-mm": 304.8, "ft-in": 12, "ft-ft": 1,
+            "m-m": 1, "m-cm": 100, "m-mm": 1000, "m-in": 39.3701, "m-ft": 3.28084, "m-g": 1 / 9.81,
+            "cm-m": 0.01, "cm-cm": 1, "cm-mm": 10, "cm-in": 0.393701, "cm-ft": 0.0328084, "cm_g": 1 / 981,
+            "mm-m": 0.001, "mm-cm": 0.1, "mm-mm": 1, "mm-in": 0.0393701, "mm-ft": 0.00328084, "mm-g": 1 / 9810,
+            "in-m": 0.0254, "in-cm": 2.54, "in-mm": 25.4, "in-in": 1, "in-ft": 0.0833333, "in-g": 1 / (9.81 * 39.3701),
+            "ft-m": 0.3048, "ft-cm": 30.48, "ft-mm": 304.8, "ft-in": 12, "ft-ft": 1, "ft-g": 1 / (9.81 * 3.28084),
         }
         self.set_units(acc=unit, vel='cm', disp='cm')
-        self.vel *= self.vel_factor
-        self.disp *= self.disp_factor
 
         # colors
         self.colors = ['#037ef3', '#f85a40',
@@ -88,11 +85,17 @@ class SeismoGM:
         disp : str, optional, one of ('m', 'cm', 'mm', 'in', 'ft')
             Unit of output displacement, by default "cm".
         """
+        self.acc_factor = self.unit_factors[f"{self.acc_unit}-{acc}"]
         self.acc_unit = acc
-        self.vel_unit = vel
-        self.disp_unit = disp
+        self.acc *= self.acc_factor
+        self.vel = cumulative_trapezoid(self.acc, self.time, initial=0)
+        self.disp = cumulative_trapezoid(self.vel, self.time, initial=0)
         self.vel_factor = self.unit_factors[f"{acc}-{vel}"]
         self.disp_factor = self.unit_factors[f"{acc}-{disp}"]
+        self.vel_unit = vel
+        self.disp_unit = disp
+        self.vel *= self.vel_factor
+        self.disp *= self.disp_factor
         acc_end = '' if self.acc_unit == 'g' else "/s2"
         print(f"[#0099e5]acc-unit: {self.acc_unit}{acc_end};[/]\n"
               f"[#ff4c4c]vel-unit；{self.vel_unit}/s;[/]\n"
@@ -236,19 +239,20 @@ class SeismoGM:
                       Tbd=t_bd,
                       Tud=t_ud
                       )
+        units, IMnames = _get_ims_unit(self)
         if display_results:
             console = Console()
             table = Table(title="")  # IMs Independent of Spectra
-            # cmap = plt.get_cmap("cool")
-            # colors = cmap(np.linspace(0, 1, len(output)))
-            # colors = [mpl.colors.rgb2hex(i, keep_alpha=False) for i in colors]
-            # colors = iter(colors)
             table.add_column("IM", justify="left", style="bold", no_wrap=True)
-            table.add_column("Value", justify="right", style="bold")
+            table.add_column("Value", justify="center", style="bold")
+            table.add_column("Unit", justify="center", style="bold")
+            table.add_column("Name", justify="right", style="bold")
             for key, values in output.items():
                 # c = next(colors)
-                table.add_row(f"[#fd5c63]{key}[/]",
-                              f"[#34bf49]{values:>.3f}[/]")
+                table.add_row(f"[#0099e5]{key}[/]",
+                              f"[#ff4c4c]{values:>.3f}[/]",
+                              f"[#34bf49]{units[key]}[/]",
+                              f"[#0cb9c1]{IMnames[key]}[/]")
             console.print(table)
         return output
 
@@ -987,6 +991,51 @@ class SeismoGM:
         EPV = np.sum(Sv[EPidx3:EPidx4]) / (EPidx4 - EPidx3 + 1) / 2.5
         EPD = np.sum(Sd[EPidx5:EPidx6]) / (EPidx6 - EPidx5 + 1) / 2.5
         return np.array([EPA, EPV, EPD])
+
+
+def _get_ims_unit(self):
+    acc_end = '' if self.acc_unit == 'g' else "/s2"
+    units = dict(PGA=f"{self.acc_unit}{acc_end}", PGV=f"{self.vel_unit}/s", PGD=f"{self.disp_unit}",
+                 V_A="s", D_V="s",
+                 EDA=f"{self.acc_unit}{acc_end}",
+                 Ia="m/s", Ima="m/s", MIV=f"{self.vel_unit}/s",
+                 Arms=f"{self.acc_unit}{acc_end}", Vrms=f"{self.vel_unit}/s", Drms=f"{self.disp_unit}",
+                 Pa=f"({self.acc_unit}{acc_end})^2", Pv=f"({self.vel_unit}/s)^2", Pd=f"({self.disp_unit})^2",
+                 Ra=f"{self.acc_unit}{acc_end}*s^(1/3)",
+                 Rv=f"({self.vel_unit}/s)^(2/3)*s^(1/3)",
+                 Rd=f"{self.disp_unit}*s^(1/3)",
+                 SED=f"{self.vel_unit}2/s",
+                 If=f"({self.vel_unit}/s)*s^(1/4)",
+                 Ic=f"({self.acc_unit}{acc_end})^(2/3)*s^(1/2)",
+                 Icm='--', CAV=f"{self.vel_unit}/s", CAD=f"{self.vel_unit}", CAI=f"{self.disp_unit}*s",
+                 CAVstd="g*s", Ip='--', Tsig_5_95='s', Tsig_5_75='s', Tbd='s', Tud='s')
+    name = dict(PGA="Peak ground acceleration", PGV="Peak ground velocity", PGD="Peak ground displacement",
+                V_A="PGV/PGA", D_V="PGD/PGV",
+                EDA="Effective Design Acceleration ",
+                Ia="Arias Intensity", Ima="Modified Arias Intensity", MIV="Maximum Incremental Velocity",
+                Arms="Root-mean-square of acceleration",
+                Vrms="Root-mean-square of velocity",
+                Drms="Root-mean-square of displacement",
+                Pa="Housner earthquake power index of acceleration",
+                Pv="Housner earthquake power index of velocity",
+                Pd="Housner earthquake power index of displacement",
+                Ra="Riddell index of acceleration",
+                Rv="Riddell index of velocity",
+                Rd="Riddell index of displacement",
+                SED="Specific Energy Density",
+                If="Fajfar index",
+                Ic="Characteristic Intensity",
+                Icm='Cosenza–Manfredi Intensity',
+                CAV="Cumulative Absolute Velocity",
+                CAD="Cumulative Absolute Displacement",
+                CAI="Cumulative Absolute Impetus",
+                CAVstd="tandardized Cumulative Absolute Velocity",
+                Ip='Impulsivity Index',
+                Tsig_5_95=r'5%-95% Arias intensity duration',
+                Tsig_5_75=r'5%-75% Arias intensity duration',
+                Tbd='Bracketed duration',
+                Tud='Uniform duration')
+    return units, name
 
 
 # def _plot_comb_spec(Ts, Sa, Sv, Sd):

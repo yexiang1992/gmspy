@@ -1,5 +1,5 @@
 r"""
-.. _ref_ex_simple:
+.. _ref_ex_baseline:
 
 Baseline Correction
 ---------------------
@@ -12,7 +12,7 @@ In this manner, spurious baseline trends, usually well noticeable in the displac
 obtained from double time-integration of uncorrected acceleration records,
 are removed from the input motion.
 
-
+see :func:`gmspy.baselinecorr`.
 """
 
 
