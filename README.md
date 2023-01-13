@@ -4,7 +4,7 @@
 ![license](https://img.shields.io/github/license/yexiang1992/gmspy)
 [![CodeFactor](https://www.codefactor.io/repository/github/yexiang1992/gmspy/badge)](https://www.codefactor.io/repository/github/yexiang1992/gmspy)
 
-``gmspy`` is a python package for dealing with ``ground motions time-histories`` caused by earthquakes, including various ``intensity measures (IMs)``, ``elastic response spectra``, ``constant ductility response spectrum``, ``filtering``, etc.
+``gmspy`` is a python package for dealing with ``ground motions time-histories`` induced by earthquakes, including various ``intensity measures (IMs)``, ``elastic response spectra``, ``constant ductility response spectra``, ``pre-processing``, etc.
 
 To use, install `gmspy` from [gmspy-PyPI](https://pypi.org/project/gmspy/):
 
@@ -12,6 +12,7 @@ To use, install `gmspy` from [gmspy-PyPI](https://pypi.org/project/gmspy/):
 pip install --upgrade gmspy
 ```
 
+Document: [https://gmspy.readthedocs.io/en/latest/](https://gmspy.readthedocs.io/en/latest/)
 
 ### License
 
