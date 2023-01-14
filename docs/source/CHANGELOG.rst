@@ -1,6 +1,10 @@
 Changelog
 ==========
 
+v0.0.3
+-------
+- Fix bug in const ductility response spectra by :meth:`gmspy.SeismoGM.get_const_duct_spec`
+
 v0.0.2
 -------
 - Fix bug in :meth:`gmspy.SeismoGM.set_units`

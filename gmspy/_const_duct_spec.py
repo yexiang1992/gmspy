@@ -161,6 +161,8 @@ def const_duct_spec(dt: float,
 
 @jit(nopython=True)
 def sdf_response(m, zeta, k, Fy, alpha, acc, dt, uresidual=0, umaxprev=0):
+    # This function is copy from sdfResponse() in OpenSeesPy
+    # The original is the C++ version, with some modifications made
     gamma = 0.5
     beta = 1 / 6  # 0.25
     tol = 1.0e-8
@@ -244,6 +246,6 @@ def sdf_response(m, zeta, k, Fy, alpha, acc, dt, uresidual=0, umaxprev=0):
             umax = np.abs(u)
         if np.abs(v) > vmax:
             vmax = np.abs(v)
-        if np.abs(a + acc[i]) > amax:
-            amax = np.abs(a + acc[i])
+        if np.abs(a + acc[i-1]) > amax:
+            amax = np.abs(a + acc[i-1])
     return umax, vmax, amax, u, up
