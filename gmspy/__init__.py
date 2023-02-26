@@ -7,6 +7,7 @@ from ._freq_filt import freq_filt
 from ._lin_dyna_resp import lida
 from ._load_gm_examples import load_gm_examples
 from ._load_peer import loadPEER
+from ._load_peer_batch import loadPEERbatch
 from ._resample import resample
 from .seismo import SeismoGM
 
@@ -20,4 +21,5 @@ __all__ = ["__version__",
            "fou_pow_spec",
            "lida",
            "load_gm_examples",
-           "loadPEER"]
+           "loadPEER",
+           "loadPEERbatch"]

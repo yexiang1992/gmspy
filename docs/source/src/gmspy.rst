@@ -11,6 +11,8 @@ Ohther gmspy module contents
 
 ..  autofunction:: gmspy.loadPEER
 
+..  autofunction:: gmspy.loadPEERbatch
+
 ..  autofunction:: gmspy.load_gm_examples
 
 ..  autofunction:: gmspy.baselinecorr

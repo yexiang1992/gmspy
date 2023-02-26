@@ -1,6 +1,10 @@
 Changelog
 ==========
 
+v0.0.4
+------
+- Added :func:`gmspy.loadPEERbatch`
+
 v0.0.3
 -------
 - Fix bug in const ductility response spectra by :meth:`gmspy.SeismoGM.get_const_duct_spec`
