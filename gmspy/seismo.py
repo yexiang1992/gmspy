@@ -850,6 +850,8 @@ class SeismoGM:
         T1 = np.atleast_1d(T1)
         output1 = self.get_elas_spec(T1, damp_ratio)
         output2 = self.get_elas_spec(T1 * 2, damp_ratio)
+        output1 = np.atleast_2d(output1)
+        output2 = np.atleast_2d(output2)
         sa1 = output1[:, 2]
         sa2 = output2[:, 2]
         sac = sa1**alpha * sa2**beta
@@ -902,6 +904,9 @@ class SeismoGM:
         output1 = self.get_elas_spec(T1, damp_ratio)
         output2 = self.get_elas_spec(T2, damp_ratio)
         output3 = self.get_elas_spec(T3, damp_ratio)
+        output1 = np.atleast_2d(output1)
+        output2 = np.atleast_2d(output2)
+        output3 = np.atleast_2d(output3)
         sa1, sa2, sa3 = output1[:, 2], output2[:, 2], output3[:, 2]
         sa_vam = sa1**alpha * sa2**beta * sa3**gamma
         if len(sa_vam) == 1:
@@ -938,6 +943,8 @@ class SeismoGM:
         """
         output1 = self.get_elas_spec(T1, damp_ratio)
         output2 = self.get_elas_spec(T2, damp_ratio)
+        output1 = np.atleast_2d(output1)
+        output2 = np.atleast_2d(output2)
         sa1, sa2 = output1[:, 2], output2[:, 2]
         sa_mp = sa1**(m1 / (m1 + m2)) * sa2**(m2 / (m1 + m2))
         if len(sa_mp) == 1:
@@ -971,6 +978,7 @@ class SeismoGM:
         """
         n = len(Tavg)
         output = self.get_elas_spec(Tavg, damp_ratio, n_jobs=n_jobs)
+        output = np.atleast_2d(output)
         output = output[:, 2:]
         savd_avg = np.exp(np.sum(np.log(output), axis=0) / n)
         return savd_avg
