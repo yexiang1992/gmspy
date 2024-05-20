@@ -1,11 +1,10 @@
 from typing import Union
 
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from rich import print
 from rich.console import Console
-from rich.table import Column, Table
+from rich.table import Table
 from scipy.integrate import cumulative_trapezoid, trapz
 
 from ._const_duct_spec import const_duct_spec
@@ -30,17 +29,16 @@ class SeismoGM:
 
     """
 
-    def __init__(self,
-                 dt: float,
-                 acc: list,
-                 unit: str = 'g'
-                 ) -> None:
+    def __init__(self, dt: float, acc: Union[list, tuple, np.ndarray], unit: str = "g") -> None:
         self.dt = dt
         self.acc = np.array(acc)
         if np.abs(self.acc[0]) > 1e-5:
             self.acc = np.insert(self.acc, 0, 0)
         self.nacc = len(self.acc)
         self.time = np.arange(self.nacc) * dt
+
+        self.disp = None
+        self.vel = None
 
         # Arias IMs
         self.Arias = None
@@ -59,23 +57,54 @@ class SeismoGM:
         self.disp_factor = None
         self.unit_factors = {
             "g-g": 1.0,
-            "g-m": 9.81, "g-cm": 981, "g-mm": 9810, "g-in": 9.81 * 39.3701, "g-ft": 9.81 * 3.28084,
-            "m-m": 1, "m-cm": 100, "m-mm": 1000, "m-in": 39.3701, "m-ft": 3.28084, "m-g": 1 / 9.81,
-            "cm-m": 0.01, "cm-cm": 1, "cm-mm": 10, "cm-in": 0.393701, "cm-ft": 0.0328084, "cm_g": 1 / 981,
-            "mm-m": 0.001, "mm-cm": 0.1, "mm-mm": 1, "mm-in": 0.0393701, "mm-ft": 0.00328084, "mm-g": 1 / 9810,
-            "in-m": 0.0254, "in-cm": 2.54, "in-mm": 25.4, "in-in": 1, "in-ft": 0.0833333, "in-g": 1 / (9.81 * 39.3701),
-            "ft-m": 0.3048, "ft-cm": 30.48, "ft-mm": 304.8, "ft-in": 12, "ft-ft": 1, "ft-g": 1 / (9.81 * 3.28084),
+            "g-m": 9.81,
+            "g-cm": 981,
+            "g-mm": 9810,
+            "g-in": 9.81 * 39.3701,
+            "g-ft": 9.81 * 3.28084,
+            "m-m": 1,
+            "m-cm": 100,
+            "m-mm": 1000,
+            "m-in": 39.3701,
+            "m-ft": 3.28084,
+            "m-g": 1 / 9.81,
+            "cm-m": 0.01,
+            "cm-cm": 1,
+            "cm-mm": 10,
+            "cm-in": 0.393701,
+            "cm-ft": 0.0328084,
+            "cm_g": 1 / 981,
+            "mm-m": 0.001,
+            "mm-cm": 0.1,
+            "mm-mm": 1,
+            "mm-in": 0.0393701,
+            "mm-ft": 0.00328084,
+            "mm-g": 1 / 9810,
+            "in-m": 0.0254,
+            "in-cm": 2.54,
+            "in-mm": 25.4,
+            "in-in": 1,
+            "in-ft": 0.0833333,
+            "in-g": 1 / (9.81 * 39.3701),
+            "ft-m": 0.3048,
+            "ft-cm": 30.48,
+            "ft-mm": 304.8,
+            "ft-in": 12,
+            "ft-ft": 1,
+            "ft-g": 1 / (9.81 * 3.28084),
         }
-        self.set_units(acc=unit, vel='cm', disp='cm')
+        self.set_units(acc=unit, vel="cm", disp="cm", verbose=False)
 
         # colors
-        self.colors = ['#037ef3', '#f85a40',
-                       '#00c16e', '#7552cc', '#0cb9c1', '#f48924']
+        self.colors = [
+            "#037ef3", "#f85a40", "#00c16e", "#7552cc", "#0cb9c1", "#f48924"
+        ]
 
     def set_units(self,
                   acc: str = "g",
                   vel: str = "cm",
-                  disp: str = "cm"):
+                  disp: str = "cm",
+                  verbose: bool = True):
         """Specify the unit of input acceleration time-history and the units of output velocity and displacement.
 
         Parameters
@@ -86,6 +115,8 @@ class SeismoGM:
             Unit of output velocity, by default "cm",  ignoring time unit /s.
         disp : str, optional, one of ('m', 'cm', 'mm', 'in', 'ft')
             Unit of output displacement, by default "cm".
+        verbose: bool, default=True
+            Print info.
         """
         self.acc_factor = self.unit_factors[f"{self.acc_unit}-{acc}"]
         self.acc_unit = acc
@@ -98,19 +129,21 @@ class SeismoGM:
         self.disp_unit = disp
         self.vel *= self.vel_factor
         self.disp *= self.disp_factor
-        acc_end = '' if self.acc_unit == 'g' else "/s2"
-        print(f"[#0099e5]acc-unit: {self.acc_unit}{acc_end};[/]\n"
-              f"[#ff4c4c]vel-unit；{self.vel_unit}/s;[/]\n"
-              f"[#34bf49]disp-unit: {self.disp_unit}[/]")
+        acc_end = "" if self.acc_unit == "g" else "/s2"
+        if verbose:
+            print(f"[#0099e5]acc-unit: {self.acc_unit}{acc_end};[/]\n"
+                  f"[#ff4c4c]vel-unit；{self.vel_unit}/s;[/]\n"
+                  f"[#34bf49]disp-unit: {self.disp_unit}[/]")
 
     def plot_hist(self):
-        acc_unit_end = '' if self.acc_unit == 'g' else "/$s^2$"
-        vel_unit_end = '/s'
-        ylabels = [f'acc ({self.acc_unit}{acc_unit_end})',
-                   f'vel ({self.vel_unit}{vel_unit_end})',
-                   f'disp ({self.disp_unit})'
-                   ]
-        fig, axs = plt.subplots(3, 1, figsize=(9, 9), sharex='all')
+        acc_unit_end = "" if self.acc_unit == "g" else "/$s^2$"
+        vel_unit_end = "/s"
+        ylabels = [
+            f"acc ({self.acc_unit}{acc_unit_end})",
+            f"vel ({self.vel_unit}{vel_unit_end})",
+            f"disp ({self.disp_unit})",
+        ]
+        fig, axs = plt.subplots(3, 1, figsize=(9, 9), sharex="all")
         plot_y = [self.acc, self.vel, self.disp]
         for i in range(3):
             ax = axs[i]
@@ -123,23 +156,19 @@ class SeismoGM:
         plt.show()
 
     def get_acc(self):
-        """return acceleration time history.
-        """
+        """return acceleration time-history."""
         return self.acc
 
     def get_vel(self):
-        """return velocity time history.
-        """
+        """return velocity time-history."""
         return self.vel
 
     def get_disp(self):
-        """return displacement time history.
-        """
+        """return displacement time-history."""
         return self.disp
 
     def get_time(self):
-        """return time array.
-        """
+        """return time array."""
         return self.time
 
     def get_time_hists(self):
@@ -150,6 +179,21 @@ class SeismoGM:
             A length 3 tuple of acceleration, velocity, and displacement time histories.
         """
         return self.acc, self.vel, self.disp
+
+    def get_truncate_hists(self):
+        """Returns the truncated time-histories for 5%-95% Arias intensity.
+
+        Returns
+        -------
+        (acc, vel, disp): 1D Array like.
+        """
+        if self.Arias is None:
+            _ = self.get_ia()
+        Arias = self.Arias
+        series = self.AriasSeries
+        # elements of the time vector which are within the significant duration
+        idx = (series >= 0.05 * Arias) & (series <= 0.95 * Arias)
+        return self.acc[idx], self.vel[idx], self.disp[idx]
 
     def get_ims(self, display_results: bool = False):
         """return various IMs independent of response spectra.
@@ -209,38 +253,39 @@ class SeismoGM:
         tsig_5_75, _ = self.get_t_5_75()
         t_bd = self.get_brac_td()
         t_ud = self.get_unif_td()
-        output = dict(PGA=pga,
-                      PGV=pgv,
-                      PGD=pgd,
-                      V_A=v_a,
-                      D_V=d_v,
-                      EDA=eda,
-                      Ia=arias,
-                      Ima=arias_corr,
-                      MIV=miv,
-                      Arms=arms,
-                      Vrms=vrms,
-                      Drms=drms,
-                      Pa=pa,
-                      Pv=pv,
-                      Pd=pd,
-                      Ra=ra,
-                      Rv=rv,
-                      Rd=rd,
-                      SED=sed,
-                      If=fi,
-                      Ic=ic,
-                      Icm=icm,
-                      CAV=cav,
-                      CAD=cad,
-                      CAI=cai,
-                      CAVstd=cavstd,
-                      Ip=ip,
-                      Tsig_5_95=tsig_5_95,
-                      Tsig_5_75=tsig_5_75,
-                      Tbd=t_bd,
-                      Tud=t_ud
-                      )
+        output = dict(
+            PGA=pga,
+            PGV=pgv,
+            PGD=pgd,
+            V_A=v_a,
+            D_V=d_v,
+            EDA=eda,
+            Ia=arias,
+            Ima=arias_corr,
+            MIV=miv,
+            Arms=arms,
+            Vrms=vrms,
+            Drms=drms,
+            Pa=pa,
+            Pv=pv,
+            Pd=pd,
+            Ra=ra,
+            Rv=rv,
+            Rd=rd,
+            SED=sed,
+            If=fi,
+            Ic=ic,
+            Icm=icm,
+            CAV=cav,
+            CAD=cad,
+            CAI=cai,
+            CAVstd=cavstd,
+            Ip=ip,
+            Tsig_5_95=tsig_5_95,
+            Tsig_5_75=tsig_5_75,
+            Tbd=t_bd,
+            Tud=t_ud,
+        )
         units, IMnames = _get_ims_unit(self)
         if display_results:
             console = Console()
@@ -251,38 +296,36 @@ class SeismoGM:
             table.add_column("Name", justify="right", style="bold")
             for key, values in output.items():
                 # c = next(colors)
-                table.add_row(f"[#0099e5]{key}[/]",
-                              f"[#ff4c4c]{values:>.3f}[/]",
-                              f"[#34bf49]{units[key]}[/]",
-                              f"[#0cb9c1]{IMnames[key]}[/]")
+                table.add_row(
+                    f"[#0099e5]{key}[/]",
+                    f"[#ff4c4c]{values:>.3f}[/]",
+                    f"[#34bf49]{units[key]}[/]",
+                    f"[#0cb9c1]{IMnames[key]}[/]",
+                )
             console.print(table)
         return output
 
     def get_pga(self):
-        """return peak ground values of acceleration (PGA).
-        """
+        """return peak ground values of acceleration (PGA)."""
         return np.max(np.abs(self.acc))
 
     def get_pgv(self):
-        """return peak ground values of velocity (PGV).
-        """
+        """return peak ground values of velocity (PGV)."""
         return np.max(np.abs(self.vel))
 
     def get_pgd(self):
-        """return peak ground values of displacement (PGD).
-        """
+        """return peak ground values of displacement (PGD)."""
         return np.max(np.abs(self.disp))
 
     def get_v_a(self):
-        """Peak velocity and acceleration ratio (PGV/PGA).
-        """
+        """Peak velocity and acceleration ratio (PGV/PGA)."""
         v_a = self.get_pgv() / self.get_pga() / self.vel_factor
         return v_a
 
     def get_d_v(self):
-        """Peak displacement and velocity ratio (PGD/PGV).
-        """
-        d_v = self.get_pgd() / self.disp_factor / (self.get_pgv() / self.vel_factor)
+        """Peak displacement and velocity ratio (PGD/PGV)."""
+        d_v = self.get_pgd() / self.disp_factor / (self.get_pgv() /
+                                                   self.vel_factor)
         return d_v
 
     def get_eda(self, freq=9):
@@ -295,19 +338,36 @@ class SeismoGM:
         freq: float, default=9HZ
             Frequency threshold.
         """
-        acc_filter = freq_filt(self.dt, self.acc,
-                               ftype='Butterworth', btype='lowpass',
-                               order=5, freq1=freq)
+        acc_filter = freq_filt(self.dt,
+                               self.acc,
+                               ftype="Butterworth",
+                               btype="lowpass",
+                               order=5,
+                               freq1=freq)
         eda = np.max(np.abs(acc_filter))
         return eda
 
     def get_ia(self):
-        """return Arias intensity Ia.
+        """return Arias intensity IA.
+        The Arias intensity (IA) is a measure of the strength of a ground motion.
+        It determines the intensity of shaking by measuring the acceleration of transient seismic waves.
+        It has been found to be a fairly reliable parameter to describe earthquake shaking necessary
+        to trigger landslides. It was proposed by Chilean engineer Arturo Arias in 1970.
+
+        It is defined as the time-integral of the square of the ground acceleration:
+
+        .. math::
+
+            I_{A}={\frac{\\pi}{2g}}\\int_{0}^{T_{d}}a(t)^{2}dt} (m/s)
+
+        where g is the acceleration due to gravity and Td is the duration of signal above threshold.
+        The Arias Intensity could also alternatively be defined as the sum of all the squared acceleration
+        values from seismic strong motion records.
         """
         # time history of Arias Intensity
-        acc = self.acc * self.unit_factors[f'{self.acc_unit}-m']
+        acc = self.acc * self.unit_factors[f"{self.acc_unit}-m"]
         series = np.pi / 2 / 9.81 * cumulative_trapezoid(
-            acc ** 2, self.time, initial=0)
+            acc**2, self.time, initial=0)
         # Total Arias Intensity at the end of the ground motion
         arias = series[-1]
         # time history of the normalized Arias Intensity
@@ -338,23 +398,25 @@ class SeismoGM:
         kp11 = np.array([False, *kth1])
         kp2 = np.array([False, *kth2])
         kp22 = np.array([*kth2, False])
-        timed01 = np.abs(y0 - accsig[kp1]) * np.abs(timed[kp11] - timed[kp1]) / np.abs(
-            accsig[kp11] - accsig[kp1]) + timed[kp1]
-        timed02 = np.abs(y0 - accsig[kp22]) * np.abs(timed[kp2] - timed[kp22]) / np.abs(
-            accsig[kp2] - accsig[kp22]) + timed[kp22]
+        timed01 = (
+            np.abs(y0 - accsig[kp1]) * np.abs(timed[kp11] - timed[kp1]) /
+            np.abs(accsig[kp11] - accsig[kp1]) + timed[kp1])
+        timed02 = (
+            np.abs(y0 - accsig[kp22]) * np.abs(timed[kp2] - timed[kp22]) /
+            np.abs(accsig[kp2] - accsig[kp22]) + timed[kp22])
         timed0 = np.hstack((timed01, timed02))
         timed0 = np.sort(timed0)
         nzero = len(timed0) / (timed[-1] - timed[0] + self.dt)
-        arias_m = self.Arias / nzero ** 2
+        arias_m = self.Arias / nzero**2
         return arias_m
 
     @staticmethod
     def __iv_aid(time1, time2, acc):
         iv = np.zeros(len(time1) - 1)
         for i in range(len(time1) - 1):
-            idxzero1 = np.argwhere(np.abs(time2 - time1[i]) <= 1E-8)
-            idxzero2 = np.argwhere(
-                np.abs(time2 - time1[i + 1]) <= 1E-8)  # locate zero point
+            idxzero1 = np.argwhere(np.abs(time2 - time1[i]) <= 1e-8)
+            # locate zero point
+            idxzero2 = np.argwhere(np.abs(time2 - time1[i + 1]) <= 1e-8)
             idxzero1 = idxzero1[0, 0]
             idxzero2 = idxzero2[0, 0]
             iv[i] = np.trapz(acc[idxzero1:idxzero2 + 1],
@@ -381,10 +443,12 @@ class SeismoGM:
         kp11 = np.array([False, *kth1])
         kp2 = np.array([False, *kth2])
         kp22 = np.array([*kth2, False])
-        timed01 = np.abs(y0 - accsigDura[kp1]) * np.abs(timed[kp11] - timed[kp1]) / np.abs(
-            accsigDura[kp11] - accsigDura[kp1]) + timed[kp1]
-        timed02 = np.abs(y0 - accsigDura[kp22]) * np.abs(timed[kp2] - timed[kp22]) / np.abs(
-            accsigDura[kp2] - accsigDura[kp22]) + timed[kp22]
+        timed01 = (
+            np.abs(y0 - accsigDura[kp1]) * np.abs(timed[kp11] - timed[kp1]) /
+            np.abs(accsigDura[kp11] - accsigDura[kp1]) + timed[kp1])
+        timed02 = (
+            np.abs(y0 - accsigDura[kp22]) * np.abs(timed[kp2] - timed[kp22]) /
+            np.abs(accsigDura[kp2] - accsigDura[kp22]) + timed[kp22])
         timed0 = np.hstack((timed01, timed02))
         timed0 = np.sort(timed0)
         Y0 = np.zeros(len(timed0)) + y0
@@ -398,17 +462,15 @@ class SeismoGM:
         return miv * self.vel_factor
 
     def get_sed(self):
-        """Specific Energy Density (SED).
-        """
-        sed = trapz(self.vel ** 2, self.time)
+        """Specific Energy Density (SED)."""
+        sed = trapz(self.vel**2, self.time)
         return sed
 
     def get_rms(self):
-        """Root-mean-square (RMS) of acceleration, velocity and displacement.
-        """
-        Arms = np.sqrt(trapz(self.acc ** 2, self.time) / self.time[-1])
-        Vrms = np.sqrt(trapz(self.vel ** 2, self.time) / self.time[-1])
-        Drms = np.sqrt(trapz(self.disp ** 2, self.time) / self.time[-1])
+        """Root-mean-square (RMS) of acceleration, velocity and displacement."""
+        Arms = np.sqrt(trapz(self.acc**2, self.time) / self.time[-1])
+        Vrms = np.sqrt(trapz(self.vel**2, self.time) / self.time[-1])
+        Drms = np.sqrt(trapz(self.disp**2, self.time) / self.time[-1])
         return Arms, Vrms, Drms
 
     def get_pavd(self):
@@ -420,9 +482,9 @@ class SeismoGM:
         idx_5_95 = (series >= 0.05 * Arias) & (series <= 0.95 * Arias)
         timed = self.time[idx_5_95]
         accsigDura = self.acc[idx_5_95]
-        Pa = trapz(accsigDura ** 2, timed) / (timed[-1] - timed[0])
-        Pv = trapz(self.vel[idx_5_95] ** 2, timed) / (timed[-1] - timed[0])
-        Pd = trapz(self.disp[idx_5_95] ** 2, timed) / (timed[-1] - timed[0])
+        Pa = trapz(accsigDura**2, timed) / (timed[-1] - timed[0])
+        Pv = trapz(self.vel[idx_5_95]**2, timed) / (timed[-1] - timed[0])
+        Pd = trapz(self.disp[idx_5_95]**2, timed) / (timed[-1] - timed[0])
         return Pa, Pv, Pd
 
     def get_ravd(self):
@@ -431,48 +493,44 @@ class SeismoGM:
         PGA = self.get_pga()
         PGV = self.get_pgv()
         PGD = self.get_pgd()
-        Ra = PGA * Td_5_95 ** (1 / 3)
-        Rv = PGV ** (2 / 3) * Td_5_95 ** (1 / 3)
-        Rd = PGD * Td_5_95 ** (1 / 3)
+        Ra = PGA * Td_5_95**(1 / 3)
+        Rv = PGV**(2 / 3) * Td_5_95**(1 / 3)
+        Rd = PGD * Td_5_95**(1 / 3)
         return Ra, Rv, Rd
 
     def get_if(self):
         """Fajfar index."""
         Td_5_95, _ = self.get_t_5_95()
         PGV = self.get_pgv()
-        If = PGV * Td_5_95 ** 0.25
+        If = PGV * Td_5_95**0.25
         return If
 
     def get_ic(self):
-        """Characteristic Intensity (Ic).
-        """
+        """Characteristic Intensity (Ic)."""
         Arms = self.get_rms()[0]
-        Ic = Arms ** 1.5 * np.sqrt(self.time[-1])
+        Ic = Arms**1.5 * np.sqrt(self.time[-1])
         return Ic
 
     def get_icm(self):
-        """Cosenza–Manfredi Intensity.
-        """
+        """Cosenza–Manfredi Intensity."""
         if self.Arias is None:
             _ = self.get_ia()
-        PGA = self.get_pga() * self.unit_factors[f'{self.acc_unit}-m']
-        PGV = self.get_pgv() * self.unit_factors[f'{self.vel_unit}-m']
+        PGA = self.get_pga() * self.unit_factors[f"{self.acc_unit}-m"]
+        PGV = self.get_pgv() * self.unit_factors[f"{self.vel_unit}-m"]
         Icm = 2 * 9.81 * self.Arias / (np.pi * PGA * PGV)
         return Icm
 
     def get_cavdi(self):
-        """Cumulative Absolute Velocity (CAV) ，Displacement (CAD) and Impetus(CAI).
-        """
+        """Cumulative Absolute Velocity (CAV) ，Displacement (CAD) and Impetus(CAI)."""
         CAV = trapz(np.abs(self.acc), self.time)
         CAD = trapz(np.abs(self.vel), self.time)
         CAI = trapz(np.abs(self.disp), self.time)
         return CAV * self.vel_factor, CAD, CAI
 
     def get_cavstd(self):
-        """Standardized Cumulative Absolute Velocity (CAVSTD) [Campbell and Bozorgnia 2011].
-        """
+        """Standardized Cumulative Absolute Velocity (CAVSTD) [Campbell and Bozorgnia 2011]."""
         ts = np.arange(np.floor(self.time[-1]) + 1)
-        acc = self.acc / self.unit_factors[f'g-{self.acc_unit}']
+        acc = self.acc / self.unit_factors[f"g-{self.acc_unit}"]
         idxs = []
         for t in ts:
             idx = np.argmin(np.abs(self.time - t))
@@ -480,8 +538,10 @@ class SeismoGM:
         idxs.append(len(self.time) - 1)
         cavs = []
         for i in range(len(idxs) - 1):
-            p = trapz(np.abs(acc[idxs[i]:idxs[i + 1] + 1]),
-                      self.time[idxs[i]:idxs[i + 1] + 1])
+            p = trapz(
+                np.abs(acc[idxs[i]:idxs[i + 1] + 1]),
+                self.time[idxs[i]:idxs[i + 1] + 1],
+            )
             pgai = np.max(np.abs(acc[idxs[i]:idxs[i + 1] + 1]))
             a = 0 if pgai - 0.025 < 0 else 1
             cavs.append(a * p)
@@ -496,7 +556,7 @@ class SeismoGM:
         PGV = self.get_pgv()
         vel1 = self.vel[0:-1]
         vel2 = self.vel[1:]
-        Ldv = np.sum(np.sqrt((vel2 - vel1) ** 2 + self.dt ** 2))
+        Ldv = np.sum(np.sqrt((vel2 - vel1)**2 + self.dt**2))
         Ip = Ldv / PGV
         return Ip
 
@@ -550,22 +610,26 @@ class SeismoGM:
         kp11 = np.array([False, *kth1])
         kp2 = np.array([False, *kth2])
         kp22 = np.array([*kth2, False])
-        timed01 = np.abs(y0 - acc[kp1]) * np.abs(self.time[kp11] - self.time[kp1]) / np.abs(
-            acc[kp11] - acc[kp1]) + self.time[kp1]
-        timed02 = np.abs(y0 - acc[kp22]) * np.abs(self.time[kp2] - self.time[kp22]) / np.abs(
-            acc[kp2] - acc[kp22]) + self.time[kp22]
+        timed01 = (
+            np.abs(y0 - acc[kp1]) * np.abs(self.time[kp11] - self.time[kp1]) /
+            np.abs(acc[kp11] - acc[kp1]) + self.time[kp1])
+        timed02 = (
+            np.abs(y0 - acc[kp22]) * np.abs(self.time[kp2] - self.time[kp22]) /
+            np.abs(acc[kp2] - acc[kp22]) + self.time[kp22])
         T_ud = np.sum(timed02 - timed01)
         return T_ud
 
     # -----------------------------------------------------
     # ---- response spectrum and IMs ----------------------
     # -----------------------------------------------------
-    def get_elas_spec(self,
-                      Ts: Union[float, list],
-                      damp_ratio: float = 0.05,
-                      method: str = "nigam_jennings",
-                      n_jobs: int = 0,
-                      plot: bool = False):
+    def get_elas_spec(
+        self,
+        Ts: Union[float, list, np.ndarray],
+        damp_ratio: float = 0.05,
+        method: str = "nigam_jennings",
+        n_jobs: int = 0,
+        plot: bool = False,
+    ):
         """Computing the Elastic Response Spectrum.
 
         Parameters
@@ -598,20 +662,26 @@ class SeismoGM:
             *acceleration spectrum*, *velocity spectrum* and *displacement spectrum* in turn.
         """
         Ts = np.atleast_1d(Ts)
-        output = elas_resp_spec(self.dt, self.acc, Ts,
-                                damp_ratio=damp_ratio, method=method, n_jobs=n_jobs)
-        output *= np.array([1, self.vel_factor, 1,
-                            self.vel_factor, self.disp_factor])
-
+        output = elas_resp_spec(self.dt,
+                                self.acc,
+                                Ts,
+                                damp_ratio=damp_ratio,
+                                method=method,
+                                n_jobs=n_jobs)
+        output *= np.array(
+            [1, self.vel_factor, 1, self.vel_factor, self.disp_factor]
+        )
         if plot:
-            acc_unit_end = '' if self.acc_unit == 'g' else "/$s^2$"
-            vel_unit_end = '/s'
-            ylabels = [f'PSa ({self.acc_unit}{acc_unit_end})',
-                       f'PSv ({self.vel_unit}{vel_unit_end})',
-                       f'Sa ({self.acc_unit}{acc_unit_end})',
-                       f'Sv ({self.vel_unit}{vel_unit_end})',
-                       f'Sd ({self.disp_unit})']
-            fig, axs = plt.subplots(5, 1, figsize=(9, 15), sharex='all')
+            acc_unit_end = "" if self.acc_unit == "g" else "/$s^2$"
+            vel_unit_end = "/s"
+            ylabels = [
+                f"PSa ({self.acc_unit}{acc_unit_end})",
+                f"PSv ({self.vel_unit}{vel_unit_end})",
+                f"Sa ({self.acc_unit}{acc_unit_end})",
+                f"Sv ({self.vel_unit}{vel_unit_end})",
+                f"Sd ({self.disp_unit})",
+            ]
+            fig, axs = plt.subplots(5, 1, figsize=(9, 15), sharex="all")
             for i in range(5):
                 ax = axs[i]
                 ax.plot(Ts, output[:, i], lw=1.5, c=self.colors[i])
@@ -621,18 +691,23 @@ class SeismoGM:
                 ax.tick_params(labelsize=12)
             axs[-1].set_xlabel("Ts (s)", fontsize=15)
             plt.show()
-        return output
+        if len(output) == 1:
+            return output[0]
+        else:
+            return output
 
-    def get_const_duct_spec(self,
-                            Ts: list,
-                            harden_ratio: float = 0.02,
-                            damp_ratio: float = 0.05,
-                            analy_dt: float = None,
-                            mu: float = 5,
-                            niter: int = 100,
-                            tol: float = 0.01,
-                            n_jobs: int = 0,
-                            plot: int = False):
+    def get_const_duct_spec(
+        self,
+        Ts: Union[float, list, np.ndarray],
+        harden_ratio: float = 0.02,
+        damp_ratio: float = 0.05,
+        analy_dt: float = None,
+        mu: float = 5,
+        niter: int = 100,
+        tol: float = 0.01,
+        n_jobs: int = 0,
+        plot: int = False,
+    ) -> np.ndarray:
         """Constant-ductility inelastic spectra.
         See
 
@@ -671,21 +746,32 @@ class SeismoGM:
             Each column corresponds to acceleration Sa, velocity Sv, displacement Sd spectra,
             yield displacement Dy, strength reduction factor Ry, and yield strength factor Cy (1/Ry).
         """
-        output = const_duct_spec(self.dt, self.acc, Ts, harden_ratio, damp_ratio,
-                                 analy_dt, mu, niter, tol, n_jobs)
-        output *= np.array([1, self.vel_factor, self.disp_factor,
-                            self.disp_factor, 1, 1])
+        output = const_duct_spec(
+            self.dt,
+            self.acc,
+            Ts,
+            harden_ratio,
+            damp_ratio,
+            analy_dt,
+            mu,
+            niter,
+            tol,
+            n_jobs,
+        )
+        output *= np.array(
+            [1, self.vel_factor, self.disp_factor, self.disp_factor, 1, 1])
         if plot:
-            acc_unit_end = '' if self.acc_unit == 'g' else "/$s^2$"
-            vel_unit_end = '/s'
-            ylabels = [f'Sa ({self.acc_unit}{acc_unit_end})',
-                       f'Sv ({self.vel_unit}{vel_unit_end})',
-                       f'Sd ({self.disp_unit})',
-                       f'yield displacement\nDy ({self.disp_unit})',
-                       'strength reduction factor\nRy',
-                       'yield strength factor\nCy (1/Ry)',
-                       ]
-            fig, axs = plt.subplots(6, 1, figsize=(9, 18), sharex='all')
+            acc_unit_end = "" if self.acc_unit == "g" else "/$s^2$"
+            vel_unit_end = "/s"
+            ylabels = [
+                f"Sa ({self.acc_unit}{acc_unit_end})",
+                f"Sv ({self.vel_unit}{vel_unit_end})",
+                f"Sd ({self.disp_unit})",
+                f"yield displacement\nDy ({self.disp_unit})",
+                "strength reduction factor\nRy",
+                "yield strength factor\nCy (1/Ry)",
+            ]
+            fig, axs = plt.subplots(6, 1, figsize=(9, 18), sharex="all")
             for i in range(6):
                 ax = axs[i]
                 ax.plot(Ts, output[:, i], lw=1.5, c=self.colors[i])
@@ -695,7 +781,10 @@ class SeismoGM:
                 ax.tick_params(labelsize=12)
             axs[-1].set_xlabel("Ts (s)", fontsize=15)
             plt.show()
-        return output
+        if len(output) == 1:
+            return output[0]
+        else:
+            return output
 
     def get_fou_pow_spec(self, plot: bool = False):
         """The Fourier Amplitude Spectrum and the Power Spectrum (or Power Spectral Density Function)
@@ -731,12 +820,13 @@ class SeismoGM:
         """
         return fou_pow_spec(self.time, self.acc, plot=plot)
 
-    def get_sac(self,
-                T1: Union[float, list],
-                damp_ratio: float = 0.05,
-                alpha: float = 0.5,
-                beta: float = 0.5
-                ):
+    def get_sac(
+        self,
+        T1: Union[float, list, np.ndarray],
+        damp_ratio: float = 0.05,
+        alpha: float = 0.5,
+        beta: float = 0.5,
+    ):
         """Cordova Intensity.
 
         Parameters
@@ -762,20 +852,21 @@ class SeismoGM:
         output2 = self.get_elas_spec(T1 * 2, damp_ratio)
         sa1 = output1[:, 2]
         sa2 = output2[:, 2]
-        sac = sa1 ** alpha * sa2 ** beta
+        sac = sa1**alpha * sa2**beta
         if len(sac) == 1:
             sac = sac[0]
         return sac
 
-    def get_savam(self,
-                  T1: Union[float, list],
-                  T2: Union[float, list],
-                  T3: Union[float, list] = None,
-                  damp_ratio: float = 0.05,
-                  alpha: float = 1 / 3,
-                  beta: float = 1 / 3,
-                  gamma: float = 1 / 3
-                  ):
+    def get_savam(
+        self,
+        T1: Union[float, list, np.ndarray],
+        T2: Union[float, list, np.ndarray],
+        T3: Union[float, list, np.ndarray] = None,
+        damp_ratio: float = 0.05,
+        alpha: float = 1 / 3,
+        beta: float = 1 / 3,
+        gamma: float = 1 / 3,
+    ):
         """Vamvatsikos Intensity.
 
         Parameters
@@ -812,17 +903,19 @@ class SeismoGM:
         output2 = self.get_elas_spec(T2, damp_ratio)
         output3 = self.get_elas_spec(T3, damp_ratio)
         sa1, sa2, sa3 = output1[:, 2], output2[:, 2], output3[:, 2]
-        sa_vam = sa1 ** alpha * sa2 ** beta * sa3 ** gamma
+        sa_vam = sa1**alpha * sa2**beta * sa3**gamma
         if len(sa_vam) == 1:
             sa_vam = sa_vam[0]
         return sa_vam
 
-    def get_samp(self,
-                 T1: Union[float, list],
-                 T2: Union[float, list],
-                 m1: Union[float, list],
-                 m2: Union[float, list],
-                 damp_ratio: float = 0.05):
+    def get_samp(
+        self,
+        T1: Union[float, list, np.ndarray],
+        T2: Union[float, list, np.ndarray],
+        m1: Union[float, list, np.ndarray],
+        m2: Union[float, list, np.ndarray],
+        damp_ratio: float = 0.05,
+    ):
         """Multiple-Period Intensities.
 
         Parameters
@@ -846,13 +939,13 @@ class SeismoGM:
         output1 = self.get_elas_spec(T1, damp_ratio)
         output2 = self.get_elas_spec(T2, damp_ratio)
         sa1, sa2 = output1[:, 2], output2[:, 2]
-        sa_mp = sa1 ** (m1 / (m1 + m2)) * sa2 ** (m2 / (m1 + m2))
+        sa_mp = sa1**(m1 / (m1 + m2)) * sa2**(m2 / (m1 + m2))
         if len(sa_mp) == 1:
             sa_mp = sa_mp[0]
         return sa_mp
 
     def get_avgsavd(self,
-                    Tavg: list,
+                    Tavg: Union[list, tuple, np.ndarray],
                     damp_ratio: float = 0.05,
                     n_jobs: int = 0):
         """Average Spectral Acceleration, Velocity and Displacement.
@@ -890,8 +983,7 @@ class SeismoGM:
         self.Spec_sp = output
         return output
 
-    def get_savdp(self,
-                  damp_ratio: float = 0.05):
+    def get_savdp(self, damp_ratio: float = 0.05):
         """The peak of the response spectra.
 
         Parameters
@@ -911,8 +1003,7 @@ class SeismoGM:
         Savd_p = np.max(np.abs(output[:, 2:]), axis=0)
         return Savd_p
 
-    def get_avdsi(self,
-                  damp_ratio: float = 0.05):
+    def get_avdsi(self, damp_ratio: float = 0.05):
         """Acceleration (ASI)，Velocity (VSI) and Displacement(DSI) Spectrum Intensity.
 
         Parameters
@@ -929,18 +1020,17 @@ class SeismoGM:
             output = self._spectrum_prefit(damp_ratio)
         else:
             output = self.Spec_sp
-        SIidx1 = np.argwhere(np.abs(self.Tsp - 0.1) <= 1E-8).item()
-        SIidx2 = np.argwhere(np.abs(self.Tsp - 0.5) <= 1E-8).item()
-        SIidx3 = np.argwhere(np.abs(self.Tsp - 2.5) <= 1E-8).item()
-        SIidx4 = np.argwhere(np.abs(self.Tsp - 4.0) <= 1E-8).item()
+        SIidx1 = np.argwhere(np.abs(self.Tsp - 0.1) <= 1e-8).item()
+        SIidx2 = np.argwhere(np.abs(self.Tsp - 0.5) <= 1e-8).item()
+        SIidx3 = np.argwhere(np.abs(self.Tsp - 2.5) <= 1e-8).item()
+        SIidx4 = np.argwhere(np.abs(self.Tsp - 4.0) <= 1e-8).item()
         Sasp, Svsp, Sdsp = output[:, 2], output[:, 3], output[:, 4]
         ASI = trapz(Sasp[SIidx1:SIidx2], self.Tsp[SIidx1:SIidx2])
         VSI = trapz(Svsp[SIidx1:SIidx3], self.Tsp[SIidx1:SIidx3])
         DSI = trapz(Sdsp[SIidx3:SIidx4], self.Tsp[SIidx3:SIidx4])
         return np.array([ASI, VSI, DSI])
 
-    def get_hsi(self,
-                damp_ratio: float = 0.05):
+    def get_hsi(self, damp_ratio: float = 0.05):
         """Housner Spectra Intensity (HSI).
 
         Parameters
@@ -958,8 +1048,8 @@ class SeismoGM:
         else:
             output = self.Spec_sp
         PSv = output[:, 1]
-        HSIidxLow = np.argwhere(np.abs(self.Tsp - 0.1) <= 1E-8).item()
-        HSIidxTop = np.argwhere(np.abs(self.Tsp - 2.5) <= 1E-8).item()
+        HSIidxLow = np.argwhere(np.abs(self.Tsp - 0.1) <= 1e-8).item()
+        HSIidxTop = np.argwhere(np.abs(self.Tsp - 2.5) <= 1e-8).item()
         hsi = 1 / 2.4 * trapz(PSv[HSIidxLow:HSIidxTop],
                               self.Tsp[HSIidxLow:HSIidxTop])
         return hsi
@@ -982,12 +1072,12 @@ class SeismoGM:
         else:
             output = self.Spec_sp
         Tsp = self.Tsp
-        EPidx1 = np.argwhere(np.abs(Tsp - 0.1) <= 1E-8).item()
-        EPidx2 = np.argwhere(np.abs(Tsp - 0.5) <= 1E-8).item()
-        EPidx3 = np.argwhere(np.abs(Tsp - 0.8) <= 1E-8).item()
-        EPidx4 = np.argwhere(np.abs(Tsp - 2.0) <= 1E-8).item()
-        EPidx5 = np.argwhere(np.abs(Tsp - 2.5) <= 1E-8).item()
-        EPidx6 = np.argwhere(np.abs(Tsp - 4.0) <= 1E-8).item()
+        EPidx1 = np.argwhere(np.abs(Tsp - 0.1) <= 1e-8).item()
+        EPidx2 = np.argwhere(np.abs(Tsp - 0.5) <= 1e-8).item()
+        EPidx3 = np.argwhere(np.abs(Tsp - 0.8) <= 1e-8).item()
+        EPidx4 = np.argwhere(np.abs(Tsp - 2.0) <= 1e-8).item()
+        EPidx5 = np.argwhere(np.abs(Tsp - 2.5) <= 1e-8).item()
+        EPidx6 = np.argwhere(np.abs(Tsp - 4.0) <= 1e-8).item()
         Sa, Sv, Sd = output[:, 2], output[:, 3], output[:, 4]
         EPA = np.sum(Sa[EPidx1:EPidx2]) / (EPidx2 - EPidx1 + 1) / 2.5
         EPV = np.sum(Sv[EPidx3:EPidx4]) / (EPidx4 - EPidx3 + 1) / 2.5
@@ -996,47 +1086,73 @@ class SeismoGM:
 
 
 def _get_ims_unit(self):
-    acc_end = '' if self.acc_unit == 'g' else "/s2"
-    units = dict(PGA=f"{self.acc_unit}{acc_end}", PGV=f"{self.vel_unit}/s", PGD=f"{self.disp_unit}",
-                 V_A="s", D_V="s",
-                 EDA=f"{self.acc_unit}{acc_end}",
-                 Ia="m/s", Ima="m/s", MIV=f"{self.vel_unit}/s",
-                 Arms=f"{self.acc_unit}{acc_end}", Vrms=f"{self.vel_unit}/s", Drms=f"{self.disp_unit}",
-                 Pa=f"({self.acc_unit}{acc_end})^2", Pv=f"({self.vel_unit}/s)^2", Pd=f"({self.disp_unit})^2",
-                 Ra=f"{self.acc_unit}{acc_end}*s^(1/3)",
-                 Rv=f"({self.vel_unit}/s)^(2/3)*s^(1/3)",
-                 Rd=f"{self.disp_unit}*s^(1/3)",
-                 SED=f"{self.vel_unit}2/s",
-                 If=f"({self.vel_unit}/s)*s^(1/4)",
-                 Ic=f"({self.acc_unit}{acc_end})^(2/3)*s^(1/2)",
-                 Icm='--', CAV=f"{self.vel_unit}/s", CAD=f"{self.vel_unit}", CAI=f"{self.disp_unit}*s",
-                 CAVstd="g*s", Ip='--', Tsig_5_95='s', Tsig_5_75='s', Tbd='s', Tud='s')
-    name = dict(PGA="Peak ground acceleration", PGV="Peak ground velocity", PGD="Peak ground displacement",
-                V_A="PGV/PGA", D_V="PGD/PGV",
-                EDA="Effective Design Acceleration ",
-                Ia="Arias Intensity", Ima="Modified Arias Intensity", MIV="Maximum Incremental Velocity",
-                Arms="Root-mean-square of acceleration",
-                Vrms="Root-mean-square of velocity",
-                Drms="Root-mean-square of displacement",
-                Pa="Housner earthquake power index of acceleration",
-                Pv="Housner earthquake power index of velocity",
-                Pd="Housner earthquake power index of displacement",
-                Ra="Riddell index of acceleration",
-                Rv="Riddell index of velocity",
-                Rd="Riddell index of displacement",
-                SED="Specific Energy Density",
-                If="Fajfar index",
-                Ic="Characteristic Intensity",
-                Icm='Cosenza–Manfredi Intensity',
-                CAV="Cumulative Absolute Velocity",
-                CAD="Cumulative Absolute Displacement",
-                CAI="Cumulative Absolute Impetus",
-                CAVstd="tandardized Cumulative Absolute Velocity",
-                Ip='Impulsivity Index',
-                Tsig_5_95=r'5%-95% Arias intensity duration',
-                Tsig_5_75=r'5%-75% Arias intensity duration',
-                Tbd='Bracketed duration',
-                Tud='Uniform duration')
+    acc_end = "" if self.acc_unit == "g" else "/s2"
+    units = dict(
+        PGA=f"{self.acc_unit}{acc_end}",
+        PGV=f"{self.vel_unit}/s",
+        PGD=f"{self.disp_unit}",
+        V_A="s",
+        D_V="s",
+        EDA=f"{self.acc_unit}{acc_end}",
+        Ia="m/s",
+        Ima="m/s",
+        MIV=f"{self.vel_unit}/s",
+        Arms=f"{self.acc_unit}{acc_end}",
+        Vrms=f"{self.vel_unit}/s",
+        Drms=f"{self.disp_unit}",
+        Pa=f"({self.acc_unit}{acc_end})^2",
+        Pv=f"({self.vel_unit}/s)^2",
+        Pd=f"({self.disp_unit})^2",
+        Ra=f"{self.acc_unit}{acc_end}*s^(1/3)",
+        Rv=f"({self.vel_unit}/s)^(2/3)*s^(1/3)",
+        Rd=f"{self.disp_unit}*s^(1/3)",
+        SED=f"{self.vel_unit}2/s",
+        If=f"({self.vel_unit}/s)*s^(1/4)",
+        Ic=f"({self.acc_unit}{acc_end})^(2/3)*s^(1/2)",
+        Icm="--",
+        CAV=f"{self.vel_unit}/s",
+        CAD=f"{self.vel_unit}",
+        CAI=f"{self.disp_unit}*s",
+        CAVstd="g*s",
+        Ip="--",
+        Tsig_5_95="s",
+        Tsig_5_75="s",
+        Tbd="s",
+        Tud="s",
+    )
+    name = dict(
+        PGA="Peak ground acceleration",
+        PGV="Peak ground velocity",
+        PGD="Peak ground displacement",
+        V_A="PGV/PGA",
+        D_V="PGD/PGV",
+        EDA="Effective Design Acceleration ",
+        Ia="Arias Intensity",
+        Ima="Modified Arias Intensity",
+        MIV="Maximum Incremental Velocity",
+        Arms="Root-mean-square of acceleration",
+        Vrms="Root-mean-square of velocity",
+        Drms="Root-mean-square of displacement",
+        Pa="Housner earthquake power index of acceleration",
+        Pv="Housner earthquake power index of velocity",
+        Pd="Housner earthquake power index of displacement",
+        Ra="Riddell index of acceleration",
+        Rv="Riddell index of velocity",
+        Rd="Riddell index of displacement",
+        SED="Specific Energy Density",
+        If="Fajfar index",
+        Ic="Characteristic Intensity",
+        Icm="Cosenza–Manfredi Intensity",
+        CAV="Cumulative Absolute Velocity",
+        CAD="Cumulative Absolute Displacement",
+        CAI="Cumulative Absolute Impetus",
+        CAVstd="tandardized Cumulative Absolute Velocity",
+        Ip="Impulsivity Index",
+        Tsig_5_95=r"5%-95% Arias intensity duration",
+        Tsig_5_75=r"5%-75% Arias intensity duration",
+        Tbd="Bracketed duration",
+        Tud="Uniform duration",
+    )
     return units, name
 
 

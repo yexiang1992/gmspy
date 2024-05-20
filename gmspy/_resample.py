@@ -1,9 +1,11 @@
 import fractions
+from typing import Union
+
 import numpy as np
 from scipy import signal
 
 
-def resample(dt: float, acc: list, dti: float):
+def resample(dt: float, acc: Union[list, tuple, np.ndarray], dti: float):
     """Resampling the signal.
 
     Parameters

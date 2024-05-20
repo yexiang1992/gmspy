@@ -1,3 +1,5 @@
+from typing import Union
+
 import numpy as np
 from joblib import Parallel, delayed
 
@@ -5,11 +7,11 @@ from ._lin_dyna_resp import lida
 
 
 def elas_resp_spec(dt: float,
-                   acc: list,
-                   Ts: list,
+                   acc: Union[list, tuple, np.ndarray],
+                   Ts: Union[list, tuple, np.ndarray],
                    damp_ratio: float = 0.05,
                    method: str = "nigam_jennings",
-                   n_jobs: int = 0):
+                   n_jobs: int = 0) -> np.ndarray:
     """Computing the Elastic Response Spectrum.
 
     Parameters
@@ -45,6 +47,8 @@ def elas_resp_spec(dt: float,
     """
     acc = np.array(acc)
     Ts = np.atleast_1d(Ts)
+    if np.abs(Ts[0] - 0) < 1e-8:
+        Ts[0] = 1e-6
     omegas = 2 * np.pi / Ts
 
     def spec(wn):
