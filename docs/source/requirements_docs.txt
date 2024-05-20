@@ -4,6 +4,7 @@ matplotlib
 numba
 joblib
 rich
+gmspy
 Sphinx
 sphinx-rtd-theme
 sphinx-gallery

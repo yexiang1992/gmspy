@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
-
+from typing import Union
 
 def freq_filt(dt: float,
-              acc: list,
+              acc: Union[list, tuple, np.ndarray],
               ftype: str = "Butterworth",
               btype: str = "bandpass",
               order: int = 4,

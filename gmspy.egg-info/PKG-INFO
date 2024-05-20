@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: gmspy
-Version: 0.0.4
+Version: 0.0.6
 Summary: Ground Motions Signal Processing for Python
 Home-page: https://github.com/yexiang1992
 Author: Yexiang Yan
@@ -9,9 +9,15 @@ License: GPL Licence
 Keywords: Ground Motions Seismic IMs response spectra
 Platform: any
 Classifier: Programming Language :: Python :: 3
-Requires-Python: >=3.8.*
+Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 License-File: LICENCE.txt
+Requires-Dist: matplotlib
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: joblib
+Requires-Dist: numba
+Requires-Dist: rich
 
 [![PyPI](https://img.shields.io/pypi/v/gmspy)](https://pypi.org/project/gmspy/)
 [![Downloads](https://static.pepy.tech/badge/gmspy)](https://pepy.tech/project/gmspy)

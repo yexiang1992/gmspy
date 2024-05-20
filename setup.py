@@ -1,4 +1,3 @@
-
 from setuptools import find_packages, setup
 
 from gmspy import __version__
@@ -18,18 +17,13 @@ setup(
     license='GPL Licence',
     keywords='Ground Motions Seismic IMs response spectra',
     platforms='any',
-    python_requires='>=3.8.*',
+    python_requires='>=3.8',
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
     ],
     install_requires=[
-        'matplotlib',
-        'numpy',
-        'scipy',
-        'joblib',
-        'numba',
-        'rich'
+        'matplotlib', 'numpy', 'scipy', 'joblib', 'numba', 'rich'
     ],
     include_package_data=True,
 )

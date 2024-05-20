@@ -1,6 +1,10 @@
 Changelog
 ==========
 
+v0.0.6
+-------
+- update docs
+
 v0.0.4
 ------
 - Added :func:`gmspy.loadPEERbatch`

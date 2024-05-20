@@ -4,6 +4,7 @@ README.md
 setup.py
 gmspy/__about__.py
 gmspy/__init__.py
+gmspy/_artif_gm.py
 gmspy/_baseline_corr.py
 gmspy/_const_duct_spec.py
 gmspy/_elas_resp_spec.py
@@ -15,7 +16,6 @@ gmspy/_load_peer.py
 gmspy/_load_peer_batch.py
 gmspy/_resample.py
 gmspy/seismo.py
-gmspy/test.py
 gmspy.egg-info/PKG-INFO
 gmspy.egg-info/SOURCES.txt
 gmspy.egg-info/dependency_links.txt

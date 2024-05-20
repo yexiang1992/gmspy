@@ -1,3 +1,5 @@
+from typing import Union
+
 import numpy as np
 from joblib import Parallel, delayed
 from numba import jit
@@ -7,8 +9,8 @@ from ._resample import resample
 
 
 def const_duct_spec(dt: float,
-                    acc: list,
-                    Ts: list,
+                    acc: Union[list, tuple, np.ndarray],
+                    Ts: Union[list, tuple, np.ndarray],
                     harden_ratio: float = 0.02,
                     damp_ratio: float = 0.05,
                     analy_dt: float = None,
@@ -64,6 +66,8 @@ def const_duct_spec(dt: float,
     else:
         _, acc = resample(dt, acc, analy_dt)
     Ts = np.atleast_1d(Ts)
+    if np.abs(Ts[0] - 0) < 1e-8:
+        Ts[0] = 1e-6
     omegas = 2 * np.pi / Ts
     omegas = omegas[::-1]
     mass = 1.0
@@ -72,7 +76,7 @@ def const_duct_spec(dt: float,
     # Fdata = -mass * acc
     # np.savetxt(filename, Fdata, fmt="%f")
 
-    def run(omegai):
+    def run(omegai: float):
         k = mass * omegai ** 2
         ue, ve, ae = lida(dt, acc, omegai, damp_ratio)
         upeak = np.max(np.abs(ue))

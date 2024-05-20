@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A quick introduction &mdash; gmspy 0.0.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b76e3c8a" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=1fd71caa"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../_static/thebelab-helper.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Examples Gallery" href="../sphinx_gallery_examples/index.html" />
+    <link rel="prev" title="Changelog" href="../CHANGELOG.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            gmspy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Instructions</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../CHANGELOG.html">Changelog</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">A quick introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Load-Examples">Load Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Preprocessing">Preprocessing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Baseline-Correction">Baseline Correction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Filtering">Filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Resampling">Resampling</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#Linear-Dynamic-Time-History-Analysis-of-SDOF-System">Linear Dynamic Time-History Analysis of SDOF System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#SeismoGM----Solving-IMs,-response-spectra,-etc.">SeismoGM —Solving IMs, response spectra, etc.</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Get-IMs-independent-of-response-spectra">Get IMs independent of response spectra</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Elastic-response-spectra,-PSa,-PSv,-Sa,-Sv,-Sd">Elastic response spectra, PSa, PSv, Sa, Sv, Sd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Fourier-magnitude-and-power-spectra">Fourier magnitude and power spectra</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Constant-ductility-response-spectra">Constant ductility response spectra</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Other-Response-Spectra-Related-IMs">Other Response Spectra Related IMs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Spectral-values-at-the-first-period-of-the-structure">Spectral values at the first period of the structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Cordova-Intensity">Cordova Intensity</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Vamvatsikos-Intensity">Vamvatsikos Intensity</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Multiple-Period-Intensity">Multiple-Period Intensity</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Average-Spectral-Acceleration,-Velocity-and-Displacement">Average Spectral Acceleration, Velocity and Displacement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#The-peak-of-the-response-spectra">The peak of the response spectra</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Acceleration-(ASI)，Velocity-(VSI)-and-Displacement(DSI)-Spectrum-Intensity">Acceleration (ASI)，Velocity (VSI) and Displacement(DSI) Spectrum Intensity</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Housner-Spectra-Intensity-(HSI)">Housner Spectra Intensity (HSI)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Effective-peak-acceleration-(EPA),-velocity-(EPV)-and-displacement-(EPD)">Effective peak acceleration (EPA), velocity (EPV) and displacement (EPD)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#Validated-by-SeismoSignal">Validated by SeismoSignal</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#Velocity-and-displacement-time-histories">Velocity and displacement time-histories</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Elastic-response-spectra">Elastic response spectra</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#Const-ductility-response-spectra">Const ductility response spectra</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Gallery</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../sphinx_gallery_examples/index.html">Examples Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sphinx_gallery_examples/index.html#preprocessing">preprocessing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sphinx_gallery_examples/index.html#seismogm">SeismoGM</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Opstool Package Index</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="gmspy.html">gmspy package index</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">gmspy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">A quick introduction</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/src/intro.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="A-quick-introduction">
+<h1>A quick introduction<a class="headerlink" href="#A-quick-introduction" title="Link to this heading"></a></h1>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">gmspy</span> <span class="k">as</span> <span class="nn">gm</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.integrate</span> <span class="kn">import</span> <span class="n">cumulative_trapezoid</span>
+</pre></div>
+</div>
+</div>
+<section id="Load-Examples">
+<h2>Load Examples<a class="headerlink" href="#Load-Examples" title="Link to this heading"></a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ts</span><span class="p">,</span> <span class="n">acc</span> <span class="o">=</span> <span class="n">gm</span><span class="o">.</span><span class="n">load_gm_examples</span><span class="p">(</span><span class="s2">&quot;Kobe&quot;</span><span class="p">)</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="n">ts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Preprocessing">
+<h2>Preprocessing<a class="headerlink" href="#Preprocessing" title="Link to this heading"></a></h2>
+<section id="Baseline-Correction">
+<h3>Baseline Correction<a class="headerlink" href="#Baseline-Correction" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">acc_corr</span><span class="p">,</span> <span class="n">vel_corr</span><span class="p">,</span> <span class="n">disp_corr</span> <span class="o">=</span> <span class="n">gm</span><span class="o">.</span><span class="n">baselinecorr</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">acc</span><span class="p">,</span> <span class="n">poly_degree</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/src_intro_6_0.png" src="../_images/src_intro_6_0.png" />
+</div>
+</div>
+</section>
+<section id="Filtering">
+<h3>Filtering<a class="headerlink" href="#Filtering" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ts</span><span class="p">,</span> <span class="n">acc</span> <span class="o">=</span> <span class="n">gm</span><span class="o">.</span><span class="n">load_gm_examples</span><span class="p">(</span><span class="s2">&quot;ChiChi&quot;</span><span class="p">)</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="n">ts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">acc2</span> <span class="o">=</span> <span class="n">gm</span><span class="o">.</span><span class="n">freq_filt</span><span class="p">(</span>
+    <span class="n">dt</span><span class="p">,</span>
+    <span class="n">acc</span><span class="p">,</span>
+    <span class="n">ftype</span><span class="o">=</span><span class="s2">&quot;Butterworth&quot;</span><span class="p">,</span>  <span class="c1"># &#39;Butterworth&#39;, &#39;Chebyshev&#39;, &#39;Bessel&#39;</span>
+    <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;lowpass&quot;</span><span class="p">,</span>  <span class="c1"># &#39;lowpass&#39;, &#39;highpass&#39;, &#39;bandpass&#39;, &#39;bandstop&#39;</span>
+    <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">freq1</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+    <span class="n">freq2</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">rp</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/src_intro_8_0.png" src="../_images/src_intro_8_0.png" />
+</div>
+</div>
+</section>
+<section id="Resampling">
+<h3>Resampling<a class="headerlink" href="#Resampling" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ts</span><span class="p">,</span> <span class="n">acc</span> <span class="o">=</span> <span class="n">gm</span><span class="o">.</span><span class="n">load_gm_examples</span><span class="p">(</span><span class="s2">&quot;Imperial_Valley&quot;</span><span class="p">)</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="n">ts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">dtis</span> <span class="o">=</span> <span class="p">[</span><span class="n">dt</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">dt</span><span class="p">]</span>
+
+<span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">]</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">hlines</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">ts</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">ts</span><span class="p">),</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">acc</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;origin, dt=</span><span class="si">{</span><span class="n">dt</span><span class="si">}</span><span class="s2">, num=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">dti</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dtis</span><span class="p">):</span>
+    <span class="n">ts2</span><span class="p">,</span> <span class="n">acc2</span> <span class="o">=</span> <span class="n">gm</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="n">acc</span><span class="p">,</span> <span class="n">dti</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts2</span><span class="p">,</span> <span class="n">acc2</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;dti=</span><span class="si">{</span><span class="n">dti</span><span class="si">}</span><span class="s2">, num=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ts2</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">ts</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">ts</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;acceleration&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/src_intro_10_0.png" src="../_images/src_intro_10_0.png" />
+</div>
+</div>
+</section>
+</section>
+<section id="Linear-Dynamic-Time-History-Analysis-of-SDOF-System">
+<h2>Linear Dynamic Time-History Analysis of SDOF System<a class="headerlink" href="#Linear-Dynamic-Time-History-Analysis-of-SDOF-System" title="Link to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ts</span><span class="p">,</span> <span class="n">acc</span> <span class="o">=</span> <span class="n">gm</span><span class="o">.</span><span class="n">load_gm_examples</span><span class="p">(</span><span class="s2">&quot;Kocaeli&quot;</span><span class="p">)</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="n">ts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">T</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">omega</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">T</span>
+<span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">gm</span><span class="o">.</span><span class="n">lida</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="n">acc</span><span class="p">,</span> <span class="n">omega</span><span class="o">=</span><span class="n">omega</span><span class="p">,</span> <span class="n">damp_ratio</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/src_intro_12_0.png" src="../_images/src_intro_12_0.png" />
+</div>
+</div>
+</section>
+<section id="SeismoGM----Solving-IMs,-response-spectra,-etc.">
+<h2>SeismoGM —Solving IMs, response spectra, etc.<a class="headerlink" href="#SeismoGM----Solving-IMs,-response-spectra,-etc." title="Link to this heading"></a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ts</span><span class="p">,</span> <span class="n">acc</span> <span class="o">=</span> <span class="n">gm</span><span class="o">.</span><span class="n">load_gm_examples</span><span class="p">(</span><span class="s2">&quot;Northridge&quot;</span><span class="p">)</span>
+<span class="n">dt</span> <span class="o">=</span> <span class="n">ts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<p>Instantiate the class where the arg <code class="docutils literal notranslate"><span class="pre">unit</span></code> is used to tell the program which unit your acceleration record is in.</p>
+<p>Default: acc:g, vel=cm, disp=cm.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">GM</span> <span class="o">=</span> <span class="n">gm</span><span class="o">.</span><span class="n">SeismoGM</span><span class="p">(</span><span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">acc</span><span class="o">=</span><span class="n">acc</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;g&quot;</span><span class="p">)</span>
+<span class="n">GM</span><span class="o">.</span><span class="n">plot_hist</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/src_intro_16_0.png" src="../_images/src_intro_16_0.png" />
+</div>
+</div>
+<p>You can also reset the units</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This will change the units of all time-histories, including acceleration. Subsequent IMs are computed in the latest units.</p>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">GM</span><span class="o">.</span><span class="n">set_units</span><span class="p">(</span><span class="n">acc</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="n">vel</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">)</span>
+<span class="n">GM</span><span class="o">.</span><span class="n">plot_hist</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #0099e5; text-decoration-color: #0099e5">acc-unit: m/s2;</span>
+<span style="color: #ff4c4c; text-decoration-color: #ff4c4c">vel-unit；m/s;</span>
+<span style="color: #34bf49; text-decoration-color: #34bf49">disp-unit: m</span>
+</pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/src_intro_18_1.png" src="../_images/src_intro_18_1.png" />
+</div>
+</div>
+<section id="Get-IMs-independent-of-response-spectra">
+<h3>Get IMs independent of response spectra<a class="headerlink" href="#Get-IMs-independent-of-response-spectra" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ims</span> <span class="o">=</span> <span class="n">GM</span><span class="o">.</span><span class="n">get_ims</span><span class="p">(</span><span class="n">display_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">┏━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃<span style="font-weight: bold"> IM        </span>┃<span style="font-weight: bold"> Value  </span>┃<span style="font-weight: bold">         Unit         </span>┃<span style="font-weight: bold">                                           Name </span>┃
+┡━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">PGA</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">5.575</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">         </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m/s2</span><span style="font-weight: bold">         </span>│<span style="font-weight: bold">                       </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Peak ground acceleration</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">PGV</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.518</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">         </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m/s</span><span style="font-weight: bold">          </span>│<span style="font-weight: bold">                           </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Peak ground velocity</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">PGD</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.091</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">          </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m</span><span style="font-weight: bold">           </span>│<span style="font-weight: bold">                       </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Peak ground displacement</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">V_A</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.093</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">          </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">s</span><span style="font-weight: bold">           </span>│<span style="font-weight: bold">                                        </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">PGV/PGA</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">D_V</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.175</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">          </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">s</span><span style="font-weight: bold">           </span>│<span style="font-weight: bold">                                        </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">PGD/PGV</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">EDA</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">5.667</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">         </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m/s2</span><span style="font-weight: bold">         </span>│<span style="font-weight: bold">                  </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Effective Design Acceleration</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Ia</span><span style="font-weight: bold">        </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">2.732</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">         </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m/s</span><span style="font-weight: bold">          </span>│<span style="font-weight: bold">                                </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Arias Intensity</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Ima</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.094</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">         </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m/s</span><span style="font-weight: bold">          </span>│<span style="font-weight: bold">                       </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Modified Arias Intensity</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">MIV</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.640</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">         </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m/s</span><span style="font-weight: bold">          </span>│<span style="font-weight: bold">                   </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Maximum Incremental Velocity</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Arms</span><span style="font-weight: bold">      </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.654</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">         </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m/s2</span><span style="font-weight: bold">         </span>│<span style="font-weight: bold">               </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Root-mean-square of acceleration</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Vrms</span><span style="font-weight: bold">      </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.073</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">         </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m/s</span><span style="font-weight: bold">          </span>│<span style="font-weight: bold">                   </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Root-mean-square of velocity</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Drms</span><span style="font-weight: bold">      </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.024</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">          </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m</span><span style="font-weight: bold">           </span>│<span style="font-weight: bold">               </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Root-mean-square of displacement</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Pa</span><span style="font-weight: bold">        </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">1.694</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">       </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">(m/s2)^2</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Housner earthquake power index of acceleration</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Pv</span><span style="font-weight: bold">        </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.020</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">       </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">(m/s)^2</span><span style="font-weight: bold">        </span>│<span style="font-weight: bold">     </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Housner earthquake power index of velocity</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Pd</span><span style="font-weight: bold">        </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.002</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">        </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">(m)^2</span><span style="font-weight: bold">         </span>│<span style="font-weight: bold"> </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Housner earthquake power index of displacement</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Ra</span><span style="font-weight: bold">        </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">11.627</span><span style="font-weight: bold"> </span>│<span style="font-weight: bold">     </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m/s2*s^(1/3)</span><span style="font-weight: bold">     </span>│<span style="font-weight: bold">                  </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Riddell index of acceleration</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Rv</span><span style="font-weight: bold">        </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">1.346</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold"> </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">(m/s)^(2/3)*s^(1/3)</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">                      </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Riddell index of velocity</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Rd</span><span style="font-weight: bold">        </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.189</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">      </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m*s^(1/3)</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold">                  </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Riddell index of displacement</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">SED</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.211</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">         </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m2/s</span><span style="font-weight: bold">         </span>│<span style="font-weight: bold">                        </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Specific Energy Density</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">If</span><span style="font-weight: bold">        </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.900</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">    </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">(m/s)*s^(1/4)</span><span style="font-weight: bold">     </span>│<span style="font-weight: bold">                                   </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Fajfar index</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Ic</span><span style="font-weight: bold">        </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">3.341</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold"> </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">(m/s2)^(2/3)*s^(1/2)</span><span style="font-weight: bold"> </span>│<span style="font-weight: bold">                       </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Characteristic Intensity</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Icm</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">5.905</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">          </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">--</span><span style="font-weight: bold">          </span>│<span style="font-weight: bold">                     </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Cosenza–Manfredi Intensity</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">CAV</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">12.928</span><span style="font-weight: bold"> </span>│<span style="font-weight: bold">         </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m/s</span><span style="font-weight: bold">          </span>│<span style="font-weight: bold">                   </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Cumulative Absolute Velocity</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">CAD</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">1.578</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">          </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m</span><span style="font-weight: bold">           </span>│<span style="font-weight: bold">               </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Cumulative Absolute Displacement</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">CAI</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">0.627</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">         </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">m*s</span><span style="font-weight: bold">          </span>│<span style="font-weight: bold">                    </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Cumulative Absolute Impetus</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">CAVstd</span><span style="font-weight: bold">    </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">1.241</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">         </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">g*s</span><span style="font-weight: bold">          </span>│<span style="font-weight: bold">       </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">tandardized Cumulative Absolute Velocity</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Ip</span><span style="font-weight: bold">        </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">86.670</span><span style="font-weight: bold"> </span>│<span style="font-weight: bold">          </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">--</span><span style="font-weight: bold">          </span>│<span style="font-weight: bold">                              </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Impulsivity Index</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Tsig_5_95</span><span style="font-weight: bold"> </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">9.070</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">          </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">s</span><span style="font-weight: bold">           </span>│<span style="font-weight: bold">                </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">5%-95% Arias intensity duration</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Tsig_5_75</span><span style="font-weight: bold"> </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">3.890</span><span style="font-weight: bold">  </span>│<span style="font-weight: bold">          </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">s</span><span style="font-weight: bold">           </span>│<span style="font-weight: bold">                </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">5%-75% Arias intensity duration</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Tbd</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">23.080</span><span style="font-weight: bold"> </span>│<span style="font-weight: bold">          </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">s</span><span style="font-weight: bold">           </span>│<span style="font-weight: bold">                             </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Bracketed duration</span><span style="font-weight: bold"> </span>│
+│<span style="font-weight: bold"> </span><span style="color: #0099e5; text-decoration-color: #0099e5; font-weight: bold">Tud</span><span style="font-weight: bold">       </span>│<span style="font-weight: bold"> </span><span style="color: #ff4c4c; text-decoration-color: #ff4c4c; font-weight: bold">11.903</span><span style="font-weight: bold"> </span>│<span style="font-weight: bold">          </span><span style="color: #34bf49; text-decoration-color: #34bf49; font-weight: bold">s</span><span style="font-weight: bold">           </span>│<span style="font-weight: bold">                               </span><span style="color: #0cb9c1; text-decoration-color: #0cb9c1; font-weight: bold">Uniform duration</span><span style="font-weight: bold"> </span>│
+└───────────┴────────┴──────────────────────┴────────────────────────────────────────────────┘
+</pre></div>
+</div>
+</section>
+<section id="Elastic-response-spectra,-PSa,-PSv,-Sa,-Sv,-Sd">
+<h3>Elastic response spectra, PSa, PSv, Sa, Sv, Sd<a class="headerlink" href="#Elastic-response-spectra,-PSa,-PSv,-Sa,-Sv,-Sd" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Ts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">4.05</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+<span class="n">spectra</span> <span class="o">=</span> <span class="n">GM</span><span class="o">.</span><span class="n">get_elas_spec</span><span class="p">(</span><span class="n">Ts</span><span class="o">=</span><span class="n">Ts</span><span class="p">,</span> <span class="n">damp_ratio</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1"># PSa, PSv, Sa, Sv, Sd for each column</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/src_intro_22_0.png" src="../_images/src_intro_22_0.png" />
+</div>
+</div>
+</section>
+<section id="Fourier-magnitude-and-power-spectra">
+<h3>Fourier magnitude and power spectra<a class="headerlink" href="#Fourier-magnitude-and-power-spectra" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">output</span> <span class="o">=</span> <span class="n">GM</span><span class="o">.</span><span class="n">get_fou_pow_spec</span><span class="p">(</span><span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/src_intro_24_0.png" src="../_images/src_intro_24_0.png" />
+</div>
+</div>
+</section>
+<section id="Constant-ductility-response-spectra">
+<h3>Constant ductility response spectra<a class="headerlink" href="#Constant-ductility-response-spectra" title="Link to this heading"></a></h3>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">output</span> <span class="o">=</span> <span class="n">GM</span><span class="o">.</span><span class="n">get_const_duct_spec</span><span class="p">(</span>
+    <span class="n">Ts</span><span class="o">=</span><span class="n">Ts</span><span class="p">,</span> <span class="n">harden_ratio</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">damp_ratio</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/src_intro_26_0.png" src="../_images/src_intro_26_0.png" />
+</div>
+</div>
+</section>
+<section id="Other-Response-Spectra-Related-IMs">
+<h3>Other Response Spectra Related IMs<a class="headerlink" href="#Other-Response-Spectra-Related-IMs" title="Link to this heading"></a></h3>
+<section id="Spectral-values-at-the-first-period-of-the-structure">
+<h4>Spectral values at the first period of the structure<a class="headerlink" href="#Spectral-values-at-the-first-period-of-the-structure" title="Link to this heading"></a></h4>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">T1</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">GM</span><span class="o">.</span><span class="n">get_elas_spec</span><span class="p">(</span><span class="n">Ts</span><span class="o">=</span><span class="n">T1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([5.23026124, 0.83242193, 5.24832196, 0.98596703, 0.13248406])
+</pre></div></div>
+</div>
+</section>
+<section id="Cordova-Intensity">
+<h4>Cordova Intensity<a class="headerlink" href="#Cordova-Intensity" title="Link to this heading"></a></h4>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">GM</span><span class="o">.</span><span class="n">get_sac</span><span class="p">(</span><span class="n">T1</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+3.4821653265902692
+</pre></div></div>
+</div>
+</section>
+<section id="Vamvatsikos-Intensity">
+<h4>Vamvatsikos Intensity<a class="headerlink" href="#Vamvatsikos-Intensity" title="Link to this heading"></a></h4>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">GM</span><span class="o">.</span><span class="n">get_savam</span><span class="p">(</span><span class="n">T1</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">T2</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span> <span class="n">T3</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+4.928740859475677
+</pre></div></div>
+</div>
+</section>
+<section id="Multiple-Period-Intensity">
+<h4>Multiple-Period Intensity<a class="headerlink" href="#Multiple-Period-Intensity" title="Link to this heading"></a></h4>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">GM</span><span class="o">.</span><span class="n">get_samp</span><span class="p">(</span><span class="n">T1</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">T2</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span> <span class="n">m1</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">m2</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+6.479130184574305
+</pre></div></div>
+</div>
+</section>
+<section id="Average-Spectral-Acceleration,-Velocity-and-Displacement">
+<h4>Average Spectral Acceleration, Velocity and Displacement<a class="headerlink" href="#Average-Spectral-Acceleration,-Velocity-and-Displacement" title="Link to this heading"></a></h4>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Tavg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">4.05</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+<span class="n">GM</span><span class="o">.</span><span class="n">get_avgsavd</span><span class="p">(</span><span class="n">Tavg</span><span class="o">=</span><span class="n">Tavg</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([2.31385417, 0.77242088, 0.13549942])
+</pre></div></div>
+</div>
+</section>
+<section id="The-peak-of-the-response-spectra">
+<h4>The peak of the response spectra<a class="headerlink" href="#The-peak-of-the-response-spectra" title="Link to this heading"></a></h4>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">GM</span><span class="o">.</span><span class="n">get_savdp</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([19.53279533,  1.31668864,  0.25365994])
+</pre></div></div>
+</div>
+</section>
+<section id="Acceleration-(ASI)，Velocity-(VSI)-and-Displacement(DSI)-Spectrum-Intensity">
+<h4>Acceleration (ASI)，Velocity (VSI) and Displacement(DSI) Spectrum Intensity<a class="headerlink" href="#Acceleration-(ASI)，Velocity-(VSI)-and-Displacement(DSI)-Spectrum-Intensity" title="Link to this heading"></a></h4>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">GM</span><span class="o">.</span><span class="n">get_avdsi</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([4.94275814, 2.10650197, 0.30703019])
+</pre></div></div>
+</div>
+</section>
+<section id="Housner-Spectra-Intensity-(HSI)">
+<h4>Housner Spectra Intensity (HSI)<a class="headerlink" href="#Housner-Spectra-Intensity-(HSI)" title="Link to this heading"></a></h4>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">GM</span><span class="o">.</span><span class="n">get_hsi</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+0.762672126452001
+</pre></div></div>
+</div>
+</section>
+<section id="Effective-peak-acceleration-(EPA),-velocity-(EPV)-and-displacement-(EPD)">
+<h4>Effective peak acceleration (EPA), velocity (EPV) and displacement (EPD)<a class="headerlink" href="#Effective-peak-acceleration-(EPA),-velocity-(EPV)-and-displacement-(EPD)" title="Link to this heading"></a></h4>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">GM</span><span class="o">.</span><span class="n">get_epavd</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+array([4.87394905, 0.3827573 , 0.08184794])
+</pre></div></div>
+</div>
+</section>
+</section>
+</section>
+</section>
+<section id="Validated-by-SeismoSignal">
+<h1>Validated by SeismoSignal<a class="headerlink" href="#Validated-by-SeismoSignal" title="Link to this heading"></a></h1>
+<section id="Velocity-and-displacement-time-histories">
+<h2>Velocity and displacement time-histories<a class="headerlink" href="#Velocity-and-displacement-time-histories" title="Link to this heading"></a></h2>
+<img alt="../_images/hist_valid.png" class="align-center" src="../_images/hist_valid.png" />
+</section>
+<section id="Elastic-response-spectra">
+<h2>Elastic response spectra<a class="headerlink" href="#Elastic-response-spectra" title="Link to this heading"></a></h2>
+<img alt="../_images/ElasSpec_valid.png" class="align-center" src="../_images/ElasSpec_valid.png" />
+</section>
+<section id="Const-ductility-response-spectra">
+<h2>Const ductility response spectra<a class="headerlink" href="#Const-ductility-response-spectra" title="Link to this heading"></a></h2>
+<img alt="../_images/CDSP_valid.png" class="align-center" src="../_images/CDSP_valid.png" />
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../CHANGELOG.html" class="btn btn-neutral float-left" title="Changelog" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../sphinx_gallery_examples/index.html" class="btn btn-neutral float-right" title="Examples Gallery" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, yexiang yan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

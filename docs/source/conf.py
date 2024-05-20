@@ -31,12 +31,11 @@ sys.path.insert(0, os.path.abspath("../../"))
 # -- Project information -----------------------------------------------------
 
 project = 'gmspy'
-copyright = '2023, yexiang yan'
+copyright = '2024, yexiang yan'
 author = 'yexiang yan'
 
 # The full version, including alpha/beta/rc tags
 release = __version__
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -53,6 +52,8 @@ extensions = [
     "jupyter_sphinx",
 ]
 
+nbsphinx_allow_errors = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -61,12 +62,10 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
-
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -120,10 +119,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, "gmspy",
-     "gmspy Documentation", [author], 1)
-]
+man_pages = [(master_doc, "gmspy", "gmspy Documentation", [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -161,7 +157,7 @@ sphinx_gallery_conf = {
     "backreferences_dir": None,
     # Modules for which function level galleries are created.  In
     "doc_module": "gmspy",
-    "image_scrapers": ("matplotlib",),
+    "image_scrapers": ("matplotlib", ),
     "first_notebook_cell": ("%matplotlib inline\n"),
 }
 
