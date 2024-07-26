@@ -5,7 +5,7 @@ import numpy as np
 from rich import print
 from rich.console import Console
 from rich.table import Table
-from scipy.integrate import cumulative_trapezoid, trapz
+from scipy.integrate import cumulative_trapezoid, trapezoid
 
 from ._const_duct_spec import const_duct_spec
 from ._elas_resp_spec import elas_resp_spec
@@ -463,14 +463,14 @@ class SeismoGM:
 
     def get_sed(self):
         """Specific Energy Density (SED)."""
-        sed = trapz(self.vel**2, self.time)
+        sed = trapezoid(self.vel**2, self.time)
         return sed
 
     def get_rms(self):
         """Root-mean-square (RMS) of acceleration, velocity and displacement."""
-        Arms = np.sqrt(trapz(self.acc**2, self.time) / self.time[-1])
-        Vrms = np.sqrt(trapz(self.vel**2, self.time) / self.time[-1])
-        Drms = np.sqrt(trapz(self.disp**2, self.time) / self.time[-1])
+        Arms = np.sqrt(trapezoid(self.acc**2, self.time) / self.time[-1])
+        Vrms = np.sqrt(trapezoid(self.vel**2, self.time) / self.time[-1])
+        Drms = np.sqrt(trapezoid(self.disp**2, self.time) / self.time[-1])
         return Arms, Vrms, Drms
 
     def get_pavd(self):
@@ -482,9 +482,9 @@ class SeismoGM:
         idx_5_95 = (series >= 0.05 * Arias) & (series <= 0.95 * Arias)
         timed = self.time[idx_5_95]
         accsigDura = self.acc[idx_5_95]
-        Pa = trapz(accsigDura**2, timed) / (timed[-1] - timed[0])
-        Pv = trapz(self.vel[idx_5_95]**2, timed) / (timed[-1] - timed[0])
-        Pd = trapz(self.disp[idx_5_95]**2, timed) / (timed[-1] - timed[0])
+        Pa = trapezoid(accsigDura**2, timed) / (timed[-1] - timed[0])
+        Pv = trapezoid(self.vel[idx_5_95]**2, timed) / (timed[-1] - timed[0])
+        Pd = trapezoid(self.disp[idx_5_95]**2, timed) / (timed[-1] - timed[0])
         return Pa, Pv, Pd
 
     def get_ravd(self):
@@ -522,9 +522,9 @@ class SeismoGM:
 
     def get_cavdi(self):
         """Cumulative Absolute Velocity (CAV) ，Displacement (CAD) and Impetus(CAI)."""
-        CAV = trapz(np.abs(self.acc), self.time)
-        CAD = trapz(np.abs(self.vel), self.time)
-        CAI = trapz(np.abs(self.disp), self.time)
+        CAV = trapezoid(np.abs(self.acc), self.time)
+        CAD = trapezoid(np.abs(self.vel), self.time)
+        CAI = trapezoid(np.abs(self.disp), self.time)
         return CAV * self.vel_factor, CAD, CAI
 
     def get_cavstd(self):
@@ -538,7 +538,7 @@ class SeismoGM:
         idxs.append(len(self.time) - 1)
         cavs = []
         for i in range(len(idxs) - 1):
-            p = trapz(
+            p = trapezoid(
                 np.abs(acc[idxs[i]:idxs[i + 1] + 1]),
                 self.time[idxs[i]:idxs[i + 1] + 1],
             )
@@ -1033,9 +1033,9 @@ class SeismoGM:
         SIidx3 = np.argwhere(np.abs(self.Tsp - 2.5) <= 1e-8).item()
         SIidx4 = np.argwhere(np.abs(self.Tsp - 4.0) <= 1e-8).item()
         Sasp, Svsp, Sdsp = output[:, 2], output[:, 3], output[:, 4]
-        ASI = trapz(Sasp[SIidx1:SIidx2], self.Tsp[SIidx1:SIidx2])
-        VSI = trapz(Svsp[SIidx1:SIidx3], self.Tsp[SIidx1:SIidx3])
-        DSI = trapz(Sdsp[SIidx3:SIidx4], self.Tsp[SIidx3:SIidx4])
+        ASI = trapezoid(Sasp[SIidx1:SIidx2], self.Tsp[SIidx1:SIidx2])
+        VSI = trapezoid(Svsp[SIidx1:SIidx3], self.Tsp[SIidx1:SIidx3])
+        DSI = trapezoid(Sdsp[SIidx3:SIidx4], self.Tsp[SIidx3:SIidx4])
         return np.array([ASI, VSI, DSI])
 
     def get_hsi(self, damp_ratio: float = 0.05):
@@ -1058,7 +1058,7 @@ class SeismoGM:
         PSv = output[:, 1]
         HSIidxLow = np.argwhere(np.abs(self.Tsp - 0.1) <= 1e-8).item()
         HSIidxTop = np.argwhere(np.abs(self.Tsp - 2.5) <= 1e-8).item()
-        hsi = 1 / 2.4 * trapz(PSv[HSIidxLow:HSIidxTop],
+        hsi = 1 / 2.4 * trapezoid(PSv[HSIidxLow:HSIidxTop],
                               self.Tsp[HSIidxLow:HSIidxTop])
         return hsi
 
