@@ -5,7 +5,7 @@ import numpy as np
 from rich import print
 from rich.console import Console
 from rich.table import Table
-from scipy.integrate import cumulative_trapezoid, trapz
+from scipy.integrate import cumulative_trapezoid, trapezoid
 
 from ._const_duct_spec import const_duct_spec
 from ._elas_resp_spec import elas_resp_spec
@@ -14,9 +14,19 @@ from ._freq_filt import freq_filt
 
 
 class SeismoGM:
-    """A class for computing various intensity measures of ground motions,
+    """A class for computing various intensity measures (IMs) of ground motions,
     as well as elastic response spectra, constant ductility response spectra,
     and spectrum-related intensity measures.
+
+    See the following references for details on IMs:
+
+    * [1] Hariri-Ardebili M A, Saouma V E. Probabilistic seismic demand model and optimal intensity measure
+    for concrete dams[J]. Structural Safety, 2016, 59: 67-85.
+    .. _DOI: https://doi.org/10.1016/j.strusafe.2015.12.001
+    * [2] Yan Y, Xia Y, Yang J, et al. Optimal selection of scalar and vector-valued seismic intensity
+    measures based on Gaussian Process Regression[J]. Soil Dynamics and Earthquake Engineering,
+    2022, 152: 106961.
+    .. _DOI: https://doi.org/10.1016/j.soildyn.2021.106961
 
     Parameters
     -----------
@@ -176,12 +186,19 @@ class SeismoGM:
 
         Returns
         --------
-            A length 3 tuple of acceleration, velocity, and displacement time histories.
+        A length 3 tuple of acceleration, velocity, and displacement time histories.
         """
         return self.acc, self.vel, self.disp
 
-    def get_truncate_hists(self):
-        """Returns the truncated time-histories for 5%-95% Arias intensity.
+    def get_truncate_hists(self, lower: float = 0.05, upper: float = 0.95):
+        """Returns the truncated time-histories for lower-upper Arias intensity.
+
+        Parameters
+        -----------
+        lower : float, optional, default=0.05
+            Lower limit of truncation.
+        upper: float, optional, default=0.95
+            Upper limit of truncation.
 
         Returns
         -------
@@ -192,7 +209,7 @@ class SeismoGM:
         Arias = self.Arias
         series = self.AriasSeries
         # elements of the time vector which are within the significant duration
-        idx = (series >= 0.05 * Arias) & (series <= 0.95 * Arias)
+        idx = (series >= lower * Arias) & (series <= upper * Arias)
         return self.acc[idx], self.vel[idx], self.disp[idx]
 
     def get_ims(self, display_results: bool = False):
@@ -419,7 +436,7 @@ class SeismoGM:
             idxzero2 = np.argwhere(np.abs(time2 - time1[i + 1]) <= 1e-8)
             idxzero1 = idxzero1[0, 0]
             idxzero2 = idxzero2[0, 0]
-            iv[i] = np.trapz(acc[idxzero1:idxzero2 + 1],
+            iv[i] = trapezoid(acc[idxzero1:idxzero2 + 1],
                              time2[idxzero1:idxzero2 + 1])
         return iv
 
@@ -463,14 +480,14 @@ class SeismoGM:
 
     def get_sed(self):
         """Specific Energy Density (SED)."""
-        sed = trapz(self.vel**2, self.time)
+        sed = trapezoid(self.vel**2, self.time)
         return sed
 
     def get_rms(self):
         """Root-mean-square (RMS) of acceleration, velocity and displacement."""
-        Arms = np.sqrt(trapz(self.acc**2, self.time) / self.time[-1])
-        Vrms = np.sqrt(trapz(self.vel**2, self.time) / self.time[-1])
-        Drms = np.sqrt(trapz(self.disp**2, self.time) / self.time[-1])
+        Arms = np.sqrt(trapezoid(self.acc**2, self.time) / self.time[-1])
+        Vrms = np.sqrt(trapezoid(self.vel**2, self.time) / self.time[-1])
+        Drms = np.sqrt(trapezoid(self.disp**2, self.time) / self.time[-1])
         return Arms, Vrms, Drms
 
     def get_pavd(self):
@@ -482,9 +499,9 @@ class SeismoGM:
         idx_5_95 = (series >= 0.05 * Arias) & (series <= 0.95 * Arias)
         timed = self.time[idx_5_95]
         accsigDura = self.acc[idx_5_95]
-        Pa = trapz(accsigDura**2, timed) / (timed[-1] - timed[0])
-        Pv = trapz(self.vel[idx_5_95]**2, timed) / (timed[-1] - timed[0])
-        Pd = trapz(self.disp[idx_5_95]**2, timed) / (timed[-1] - timed[0])
+        Pa = trapezoid(accsigDura**2, timed) / (timed[-1] - timed[0])
+        Pv = trapezoid(self.vel[idx_5_95]**2, timed) / (timed[-1] - timed[0])
+        Pd = trapezoid(self.disp[idx_5_95]**2, timed) / (timed[-1] - timed[0])
         return Pa, Pv, Pd
 
     def get_ravd(self):
@@ -522,9 +539,9 @@ class SeismoGM:
 
     def get_cavdi(self):
         """Cumulative Absolute Velocity (CAV) ，Displacement (CAD) and Impetus(CAI)."""
-        CAV = trapz(np.abs(self.acc), self.time)
-        CAD = trapz(np.abs(self.vel), self.time)
-        CAI = trapz(np.abs(self.disp), self.time)
+        CAV = trapezoid(np.abs(self.acc), self.time)
+        CAD = trapezoid(np.abs(self.vel), self.time)
+        CAI = trapezoid(np.abs(self.disp), self.time)
         return CAV * self.vel_factor, CAD, CAI
 
     def get_cavstd(self):
@@ -538,7 +555,7 @@ class SeismoGM:
         idxs.append(len(self.time) - 1)
         cavs = []
         for i in range(len(idxs) - 1):
-            p = trapz(
+            p = trapezoid(
                 np.abs(acc[idxs[i]:idxs[i + 1] + 1]),
                 self.time[idxs[i]:idxs[i + 1] + 1],
             )
@@ -647,11 +664,17 @@ class SeismoGM:
             * "Newmark0"---const acceleration Newmark-beta method, gamma=0.5, beta=0.25;
             * "Newmark1"---linear acceleration Newmark-beta method, gamma=0.5, beta=1/6.
 
+        .. note::
+           It is recommended to use the “Nigam_Jennings” method as this is exact for linear systems and
+           will be accelerated using
+           .. _numba.jit: https://numba.readthedocs.io/en/stable/user/jit.html,
+           so speed of computation should not be an issue.
+
         n_jobs : int, optional, by default 0
-            If 0, do not use parallelism.
-            If an integer greater than 0, call ``joblib`` for parallel computing,
-            and the number of cpu cores used is `n_jobs`.
-            If -1, use all cpu cores.
+            * If 0, do not use parallelism.
+            * If an integer greater than 0, call ``joblib`` for parallel computing,
+            * and the number of cpu cores used is `n_jobs`.
+            * If -1, use all cpu cores.
         plot: bool, default=False
             If True, plot spectra.
 
@@ -691,6 +714,7 @@ class SeismoGM:
                 ax.tick_params(labelsize=12)
             axs[-1].set_xlabel("Ts (s)", fontsize=15)
             plt.show()
+        output = np.array(output)
         if len(output) == 1:
             return output[0]
         else:
@@ -733,10 +757,12 @@ class SeismoGM:
         tol : float, optional
             Controls the tolerance of ductility ratio convergence, by default 0.01
         n_jobs : int, optional, by default 0
-            If 0, do not use parallelism.
-            If an integer greater than 0, call ``joblib`` for parallel computing,
-            and the number of cpu cores used is `n_jobs`.
-            If -1, use all cpu cores.
+
+            * If 0, do not use parallelism.
+            * If an integer greater than 0, call ``joblib`` for parallel computing,
+            * and the number of cpu cores used is `n_jobs`.
+            * If -1, use all cpu cores.
+
         plot: bool, default=False
             If True, plot spectra.
 
@@ -781,6 +807,7 @@ class SeismoGM:
                 ax.tick_params(labelsize=12)
             axs[-1].set_xlabel("Ts (s)", fontsize=15)
             plt.show()
+        output = np.array(output)
         if len(output) == 1:
             return output[0]
         else:
@@ -1033,9 +1060,9 @@ class SeismoGM:
         SIidx3 = np.argwhere(np.abs(self.Tsp - 2.5) <= 1e-8).item()
         SIidx4 = np.argwhere(np.abs(self.Tsp - 4.0) <= 1e-8).item()
         Sasp, Svsp, Sdsp = output[:, 2], output[:, 3], output[:, 4]
-        ASI = trapz(Sasp[SIidx1:SIidx2], self.Tsp[SIidx1:SIidx2])
-        VSI = trapz(Svsp[SIidx1:SIidx3], self.Tsp[SIidx1:SIidx3])
-        DSI = trapz(Sdsp[SIidx3:SIidx4], self.Tsp[SIidx3:SIidx4])
+        ASI = trapezoid(Sasp[SIidx1:SIidx2], self.Tsp[SIidx1:SIidx2])
+        VSI = trapezoid(Svsp[SIidx1:SIidx3], self.Tsp[SIidx1:SIidx3])
+        DSI = trapezoid(Sdsp[SIidx3:SIidx4], self.Tsp[SIidx3:SIidx4])
         return np.array([ASI, VSI, DSI])
 
     def get_hsi(self, damp_ratio: float = 0.05):
@@ -1058,7 +1085,7 @@ class SeismoGM:
         PSv = output[:, 1]
         HSIidxLow = np.argwhere(np.abs(self.Tsp - 0.1) <= 1e-8).item()
         HSIidxTop = np.argwhere(np.abs(self.Tsp - 2.5) <= 1e-8).item()
-        hsi = 1 / 2.4 * trapz(PSv[HSIidxLow:HSIidxTop],
+        hsi = 1 / 2.4 * trapezoid(PSv[HSIidxLow:HSIidxTop],
                               self.Tsp[HSIidxLow:HSIidxTop])
         return hsi
 

@@ -30,6 +30,8 @@ def psf_kanai_tajimi(w, mag, distance, soil_class=2, component='H'):
         wg, xig = 11.42, 0.80
     elif soil_class == 4:
         wg, xig = 7.39, 0.90
+    else:
+        raise ValueError('soil_class must be 1, 2, 3 or 4')
     s0 = get_s0(mag, distance, wg, xig, component=component)
     return (wg**4 + 4 * xig**2 * wg**2 * w**2) / ((wg**2-w**2)**2 + (2*xig*wg*w) ** 2) * s0
 

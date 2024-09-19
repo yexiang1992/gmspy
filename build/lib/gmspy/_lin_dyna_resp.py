@@ -11,7 +11,7 @@ def lida(
     method: str = "nigam_jennings",
     plot: bool = False,
 ):
-    """Linear Dynamic Time-History Analysis of Single Degree of Freedom Systems via Fast Fourier Transform.
+    """Linear Dynamic Time-History Analysis of Single Degree of Freedom (SDOF) System.
 
     Parameters
     ----------
@@ -34,9 +34,15 @@ def lida(
         * "Newmark0"---const acceleration Newmark-beta method, gamma=0.5, beta=0.25;
         * "Newmark1"---linear acceleration Newmark-beta method, gamma=0.5, beta=1/6.
 
+    .. note::
+       It is recommended to use the “Nigam_Jennings” method as this is exact for linear systems and
+       will be accelerated using
+       .. _numba.jit: https://numba.readthedocs.io/en/stable/user/jit.html,
+       so speed of computation should not be an issue.
+
     Returns
     -------
-    tuple(u: 1D ArrayLike, v: 1D ArrayLike, a: 1D ArrayLike)
+    3-element tuple (u: 1D ArrayLike, v: 1D ArrayLike, a: 1D ArrayLike)
         Displacement, Velocity, Acceleration Time History.
     """
     if method.lower() == "fft":

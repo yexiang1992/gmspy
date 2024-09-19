@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 def load_gm_examples(name: str = "Kobe", plot: bool = False):
-    """load ground motions examples.
+    """load built-in ground motions examples.
 
     Parameters
     ----------

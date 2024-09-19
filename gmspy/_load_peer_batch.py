@@ -1,169 +1,151 @@
-import re
 import numpy as np
 from pathlib import Path
-from copy import deepcopy
 from rich import print
+from collections import namedtuple, defaultdict
 from ._load_peer import loadPEER
-from ._elas_resp_spec import elas_resp_spec
 
 
-def _get_gm_info(p, GM, i):
-    p_i = Path(GM[i])
-    tsi, datai, rsni, uniti = loadPEER(str(p_i))
-    dti = tsi[1] - tsi[0]
-    npti = len(datai)
-    GMnamei = p_i.stem
-    return datai, tsi, dti, npti, rsni, uniti, GMnamei
+
+def _read_by_suffix(suffix: str, file_path):
+    p = Path(file_path)
+    files = list(p.rglob(f"*.{suffix}"))
+    datas = defaultdict(list)
+    for p_i in files:
+        data_ = loadPEER(p_i)
+        datas[data_.RSN].append(data_)
+    return datas
 
 
-def loadPEERbatch(path: str,
-                  scale_base: str = None,
-                  scale_target: float = None):
-    """Read PEER ground motion records in batches, and scale the records according to PGA or Sa(T1),
-    where each component uses the same scaling factor, and scales according to the largest record component of PGA.
+def _make_gm_data(data, vertical_factor=0.65, print_info=True):
+    GMdata = dict()
+    ver_suffixs = ('UP', 'DWN', 'V', 'VER', 'UD')
+    k, num = 0, len(data)
+    for rsn, values in data.items():
+        GM = namedtuple("GM", ["tsgH1", "tsgH2", "tsgV3", "times", "dt", "npts", "filenames"])
+        length = np.min([len(v.tsg) for v in values])
+        idxs = np.argsort([np.max(np.abs(v.tsg)) for v in values])[::-1]
+        ver_name, names, tsg = "", [], dict()
+        if len(idxs) == 3:
+            i = 0
+            for idx in idxs:
+                if values[idx].file_name.upper().endswith(ver_suffixs):
+                    tsg["V3"] = values[idx].tsg[:length]
+                    ver_name = values[idx].file_name
+                else:
+                    if i == 0:
+                        tsg["H1"] = values[idx].tsg[:length]
+                    else:
+                        tsg["H2"] = values[idx].tsg[:length]
+                    i += 1
+                    names.append(values[idx].file_name)
+                names.append(ver_name)
+        elif len(idxs) == 2:
+            for i, idx in enumerate(idxs):
+                if i == 0:
+                    tsg["H1"] = values[idx].tsg[:length]
+                else:
+                    tsg["H2"] = values[idx].tsg[:length]
+                tsg["V3"] = tsg["H1"] * vertical_factor
+                names.append(values[idx].file_name)
+        else:
+            tsg["H1"] = values[idxs[0]].tsg[:length]
+            tsg["H2"] = tsg["H1"]
+            tsg["V3"] = tsg["H1"] * vertical_factor
+            names.append(values[idxs[0]].file_name)
+        dt = values[0].dt
+        GMdata[rsn] = GM(
+            tsgH1=tsg["H1"], tsgH2=tsg["H2"], tsgV3=tsg["V3"],
+            times=np.arange(length) * dt,
+            dt=dt, npts=length, filenames=names
+        )
+        if print_info:
+            print(f"Info:: RSN={rsn} has been read and stored, {k + 1}/{num}, {(k+1)/num*100:.0f}%")
+        k += 1
+    return GMdata
 
-    Batch reading method: This program can automatically read all ground movement records (e.g., .AT2 files) in a folder,
-    and the output result is a list, and each element of the list is a ``dict`` object.
+
+def loadPEERbatch(
+        file_path: str,
+        vertical_factor: float = 0.65,
+        print_info: bool = True,
+        return_vel: bool = False,
+        return_disp: bool = False
+):
+    """Read PEER ground motion data under a certain path in batches.
+    The requirement is that the data has been decompressed into `*.AT2`, `*.VT2`, `*.DT2` files.
 
     Parameters
-    ----------
-    path : str, 
-        The folder that ground motion records saved.
-    scale_base : str, optional, default=None, i.e, not scale
-        Scaling parameter, PGA or response spectrum value at a certain period Sa(T1).
-        If use PGA, scale_base="PGA";
-        If use Sa(T1), scale_base="Sa(T1)", in which T1 can be replaced by any number, such as "Sa(1.0)".
-    scale_target : float, optional
-        Target scaling value, if scale_base=None, it is ignored.
+    -----------
+    file_path : str or ``pathlib.Path``
+        The path to the data file.
+    vertical_factor : float, default=0.65
+        The scaling factor used when the vertical component is missing.
+        Multiply it by the horizontal component with the largest peak value to get the vertical component.
+    print_info : bool, default=True
+        Print information when reading data.
+    return_vel: bool, default=False
+        Read and return the velocity data identified by `*.VT2` if True.
+    return_disp: bool, default=False
+        Read and return the displacement data identified by `*.DT2` if True.
 
     Returns
-    -------
-    If scale_base=None, only output GMdata.
+    --------
+    * If return_vel is ``False`` and return_disp is ``False``:
+        return accel_data: dict
+    * If return_vel is ``True`` and return_disp is ``True``:
+        return (accel_data: dict, vel_data: dict, disp_data: dict)
+    * If return_vel is ``True`` and return_disp is ``False``:
+        return (accel_data: dict, vel_data: dict)
+    * If return_vel is ``False`` and return_disp is ``True``:
+        return (accel_data: dict, disp_data: dict)
 
-    GMdata: list,
-        A list storing the original (unscaled) PEER ground motion records,
-        each element is a dict object, including the following key-value pairs:
+    ``accel_data``, ``vel_data`` or ``disp_data`` is a ``dict`` obj with unique ``RSN`` tags as keys,
+    and each value is a ``namedtuple``:
 
-        * GMdata[i]['GMH1'] ------- Horizontal 1-component, the largest horizontal component of PGA;
-        * GMdata[i]['GMH2'] ------- horizontal 2-component;
-        * GMdata[i]['GMV3'] ------- Vertical component;
-          if there is no vertical data in the original data, use horizontal 1-component multiply by 0.65
-          as the vertical component;
-        * GMdata[i]['time'] ------- time;
-        * GMdata[i]['dt'] ------- sampling time step;
-        * GMdata[i]['npts'] ------- The number of sampling points, that is, the number of data points;
-        * GMdata[i]['RSN'] ------- RSN number of record;
-        * GMdata[i]['GMname'] ----- three-direction file name of record, list.
+    ``namedtuple("GM", ["tsgH1", "tsgH2", "tsgV3", "times", "dt", "npts", "filenames"])``
 
-    If scale_base!=None, output GMdata and Target_GMdata.
+    * tsgH1: 1D numpy array, horizontal component with largest peak.
+    * tsgH2: 1D numpy array, the second horizontal component.
+    * tsgV3: 1D numpy array, vertical component.
+    * times: 1D numpy array, the times corresponding to the components.
+    * dt: float, Sampling time step.
+    * npts: int, the number of points along the components.
+    * filenames: list, the file names of the components.
 
-    Target_GMdata: list,
-        The format is the same as GMdata, except that the components after scaling.
+    You can call the output like this, ``tsg = accel_data[RSNtag].tsgH1``.
+    See .. _collections.namedtuple: https://docs.python.org/3/library/collections.html#collections.namedtuple.
 
     Examples
     --------
-    >>> GMdata = loadPEERbatch(path="C:\my_records")
-    >>> GMdata, Target_GMdata = loadPEERbatch(path="C:\my_records", scale_base="PGA", scale_target=0.5) # 0.5g
-    >>> GMdata, Target_GMdata = loadPEERbatch(path="C:\my_records", scale_base="Sa(1.0)", scale_target=0.5) # 0.5g
-
+    >>> import matplotlib.pyplot as plt
+    >>> accel = loadPEERbatch(file_path)
+    >>> tag = 666  # A specific RSN tag in accel.keys()
+    >>> print(
+    >>>     np.max(np.abs(accel[tag].tsgH1)),
+    >>>     np.max(np.abs(accel[tag].tsgH2)),
+    >>>     np.max(np.abs(accel[tag].tsgV3))
+    >>> )
+    >>> plt.plot(accel[tag].times, accel[tag].tsgH1, c='b', label='H1')
+    >>> plt.plot(accel[tag].times, accel[tag].tsgH2, c='r', label='H2')
+    >>> plt.plot(accel[tag].times, accel[tag].tsgV3, c='g', label='V3')
+    >>> plt.legend()
+    >>> plt.show()
     """
-    suffix = "AT2"
-    p = Path(path)
-    GM = list(p.rglob("*." + suffix))
-    n = len(GM)
-    data = [None] * n
-    times = [None] * n
-    dts = [None] * n
-    npts = [None] * n
-    rsns = [None] * n
-    units = [None] * n
-    GMnames = [None] * n
-
-    for i in range(n):
-        output = _get_gm_info(p, GM, i)
-        data[i], times[i], dts[i], npts[i], rsns[i], units[i], GMnames[i] = output
-    data = np.array(data, dtype=object)
-    times = np.array(times, dtype=object)
-    dts = np.array(dts)
-    npts = np.array(npts)
-    rsns = np.array(rsns)
-    GMnames = np.array(GMnames, dtype=object)
-
-    newRSN = np.unique(rsns)
-    numRSN = len(newRSN)
-    GMdata = [None] * numRSN
-
-    for i in range(numRSN):
-        idxRSN = np.nonzero(np.abs(rsns - newRSN[i]) <= 1E-8)
-        datai = data[idxRSN]
-        timei = times[idxRSN]
-        rsni = rsns[idxRSN]
-        dti = dts[idxRSN]
-        GMnamei = GMnames[idxRSN]
-        #
-        minLength = np.min([len(gm) for gm in datai])
-
-        for j in range(len(datai)):
-            datai[j] = datai[j][0:minLength]
-            timei[j] = timei[j][0:minLength]
-        datai_new = []
-        data_ver = None
-        for k in range(len(datai)):
-            ver_sw = (GMnamei[k].upper().endswith('UP') | GMnamei[k].upper().endswith('DWN') |
-                      GMnamei[k].upper().endswith('V') | GMnamei[k].upper().endswith('VER') |
-                      GMnamei[k].upper().endswith('UD'))
-            if ver_sw:
-                data_ver = datai[k]
-            else:
-                datai_new.append(datai[k])
-        datai_new = np.array(datai_new, dtype=float)
-        if np.max(np.abs(datai_new[0])) < np.max(np.abs(datai_new[1])):
-            datai_new[[0, 1]] = datai_new[[1, 0]]
-        if ver_sw:
-            datai_new = np.array([*datai_new, data_ver], dtype=float)
-        else:
-            datai_new = np.array(
-                [*datai_new, datai_new[0] * 0.65], dtype=float)
-
-        # ground motions data
-        GMdata[i] = {'GMH1': datai_new[0], 'GMH2': datai_new[1], 'GMV3': datai_new[2],
-                     'time': timei[0], 'dt': dti[0],
-                     'npts': minLength, 'RSN': rsni[0], 'GMname': GMnamei}
-
-        print(
-            f'[#0099e5]RSN={rsni[0]}[/#0099e5] has been read and stored, [#ff4c4c]{i+1}/{numRSN}[/#ff4c4c]')
-
-    print(
-        f'All [#34bf49]{numRSN}[/#34bf49] groups of ground motions have been read and stored!')
-
-    # scale
-    if scale_base:
-        if scale_base.upper() == "PGA":
-            target_GM = deepcopy(GMdata)
-            for m in range(len(GMdata)):
-                scal = scale_target / np.amax(np.abs(GMdata[m]['GMH1']))
-                target_GM[m]['GMH1'] = GMdata[m]['GMH1'] * scal
-                target_GM[m]['GMH2'] = GMdata[m]['GMH2'] * scal
-                target_GM[m]['GMV3'] = GMdata[m]['GMV3'] * scal
-            print(
-                f'All [#0099e5]{numRSN}[/#0099e5] groups of ground motions '
-                f'have been scaled to [#ff4c4c]{scale_target}g[/#ff4c4c] '
-                f'according by [#34bf49]{scale_base}[/#34bf49]!')
-            return GMdata, target_GM
-        elif scale_base.capitalize().startswith("Sa"):
-            T1 = float(re.findall(r"\d+\.?\d*", scale_base)[0])
-            target_GM = deepcopy(GMdata)
-            for m in range(len(GMdata)):
-                sa = elas_resp_spec(
-                    GMdata[m]['dt'], GMdata[m]['GMH1'], T1)[0, 2]
-                scal = scale_target / sa
-                target_GM[m]['GMH1'] = GMdata[m]['GMH1'] * scal
-                target_GM[m]['GMH2'] = GMdata[m]['GMH2'] * scal
-                target_GM[m]['GMV3'] = GMdata[m]['GMV3'] * scal
-            print(
-                f'All [#0099e5]{numRSN}[/#0099e5] groups of ground motions '
-                f'have been scaled to [#ff4c4c]{scale_target}g[/#ff4c4c] '
-                f'according by [#34bf49]{scale_base}[/#34bf49]!')
-            return GMdata, target_GM
+    DATA = []
+    accels = _read_by_suffix("AT2", file_path)
+    accel_data = _make_gm_data(accels, vertical_factor, print_info)
+    DATA.append(accel_data)
+    if return_vel:
+        vels = _read_by_suffix("VT2", file_path)
+        vel_data = _make_gm_data(vels, vertical_factor, print_info)
+        DATA.append(vel_data)
+    if return_disp:
+        disps = _read_by_suffix("DT2", file_path)
+        disp_data = _make_gm_data(disps, vertical_factor, print_info)
+        DATA.append(disp_data)
+    if print_info:
+        print(f"Info:: All {len(accels)} groups of ground motions have been read and stored!")
+    if len(DATA) == 1:
+        return DATA[0]
     else:
-        return GMdata
+        return tuple(DATA)
