@@ -140,29 +140,28 @@ texinfo_documents = [
 
 # --- Sphinx-Gallery options -----------------------------------------------------------------------
 
-sphinx_gallery_conf = {
-    # convert rst to md for ipynb
-    "pypandoc": False,
-    # path to your examples scripts
-    "examples_dirs": ["../../examples/"],
-    # path where to save gallery generated examples
-    "gallery_dirs": ["sphinx_gallery_examples"],
-    # Patter to search for example files
-    "filename_pattern": r"\.py",
-    # Remove the 'Download all examples' button from the top level gallery
-    "download_all_examples": False,
-    # Sort gallery example by file name instead of number of lines (default)
-    "within_subsection_order": FileNameSortKey,
-    # directory where function granular galleries are stored
-    "backreferences_dir": None,
-    # Modules for which function level galleries are created.  In
-    "doc_module": "gmspy",
-    "image_scrapers": ("matplotlib", ),
-    "first_notebook_cell": ("%matplotlib inline\n"),
-}
-
 # sphinx_gallery_conf = {
-#      'examples_dirs': '../examples',   # path to your example scripts
-#      'gallery_dirs': 'auto_examples',  # path to where to save gallery
-#      generated output
+#     # convert rst to md for ipynb
+#     "pypandoc": False,
+#     # path to your examples scripts
+#     "examples_dirs": ["../../examples/"],
+#     # path where to save gallery generated examples
+#     "gallery_dirs": ["sphinx_gallery_examples"],
+#     # Patter to search for example files
+#     "filename_pattern": r"\.py",
+#     # Remove the 'Download all examples' button from the top level gallery
+#     "download_all_examples": False,
+#     # Sort gallery example by file name instead of number of lines (default)
+#     "within_subsection_order": FileNameSortKey,
+#     # directory where function granular galleries are stored
+#     "backreferences_dir": None,
+#     # Modules for which function level galleries are created.  In
+#     "doc_module": "gmspy",
+#     "image_scrapers": ("matplotlib", ),
+#     "first_notebook_cell": ("%matplotlib inline\n"),
 # }
+
+sphinx_gallery_conf = {
+     'examples_dirs': "../../examples/",   # path to your example scripts
+     'gallery_dirs': "sphinx_gallery_examples",  # path to where to save gallery generated output
+}
