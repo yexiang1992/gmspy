@@ -1,6 +1,6 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.2
 Name: gmspy
-Version: 0.1.0
+Version: 0.1.2
 Summary: Ground Motions Signal Processing for Python
 Home-page: https://github.com/yexiang1992
 Author: Yexiang Yan
@@ -18,6 +18,18 @@ Requires-Dist: scipy
 Requires-Dist: joblib
 Requires-Dist: numba
 Requires-Dist: rich
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: platform
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
 
 [![PyPI](https://img.shields.io/pypi/v/gmspy)](https://pypi.org/project/gmspy/)
 [![Downloads](https://static.pepy.tech/badge/gmspy)](https://pepy.tech/project/gmspy)

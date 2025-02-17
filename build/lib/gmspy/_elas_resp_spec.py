@@ -33,11 +33,11 @@ def elas_resp_spec(dt: float,
         * "Newmark0"---const acceleration Newmark-beta method, gamma=0.5, beta=0.25;
         * "Newmark1"---linear acceleration Newmark-beta method, gamma=0.5, beta=1/6.
 
-    .. note::
-       It is recommended to use the “Nigam_Jennings” method as this is exact for linear systems and
-       will be accelerated using
-       .. _numba.jit: https://numba.readthedocs.io/en/stable/user/jit.html,
-       so speed of computation should not be an issue.
+        .. note::
+           It is recommended to use the “Nigam_Jennings” method as this is exact for linear systems and
+           will be accelerated using
+           `numba.jit <https://numba.readthedocs.io/en/stable/user/jit.html>`_
+           so speed of computation should not be an issue.
 
 
     n_jobs : int, optional, by default 0

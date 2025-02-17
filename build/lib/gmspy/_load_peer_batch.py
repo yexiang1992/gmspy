@@ -18,7 +18,7 @@ def _read_by_suffix(suffix: str, file_path):
 
 def _make_gm_data(data, vertical_factor=0.65, print_info=True):
     GMdata = dict()
-    ver_suffixs = ('UP', 'DWN', 'V', 'VER', 'UD')
+    ver_suffixs = ('UP', 'DWN', 'V', 'VER', 'UD', "V1", "V2", "UD", "Z", "Z1", "Z2", "DN")
     k, num = 0, len(data)
     for rsn, values in data.items():
         GM = namedtuple("GM", ["tsgH1", "tsgH2", "tsgV3", "times", "dt", "npts", "filenames"])
@@ -34,7 +34,7 @@ def _make_gm_data(data, vertical_factor=0.65, print_info=True):
                 else:
                     if i == 0:
                         tsg["H1"] = values[idx].tsg[:length]
-                    else:
+                    elif i == 1:
                         tsg["H2"] = values[idx].tsg[:length]
                     i += 1
                     names.append(values[idx].file_name)
