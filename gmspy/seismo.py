@@ -21,12 +21,9 @@ class SeismoGM:
     See the following references for details on IMs:
 
     * [1] Hariri-Ardebili M A, Saouma V E. Probabilistic seismic demand model and optimal intensity measure
-    for concrete dams[J]. Structural Safety, 2016, 59: 67-85.
-    .. _DOI: https://doi.org/10.1016/j.strusafe.2015.12.001
+      for concrete dams[J]. Structural Safety, 2016, 59: 67-85. .. _DOI: https://doi.org/10.1016/j.strusafe.2015.12.001
     * [2] Yan Y, Xia Y, Yang J, et al. Optimal selection of scalar and vector-valued seismic intensity
-    measures based on Gaussian Process Regression[J]. Soil Dynamics and Earthquake Engineering,
-    2022, 152: 106961.
-    .. _DOI: https://doi.org/10.1016/j.soildyn.2021.106961
+      measures based on Gaussian Process Regression[J]. Soil Dynamics and Earthquake Engineering, 2022, 152: 106961. .. _DOI: https://doi.org/10.1016/j.soildyn.2021.106961
 
     Parameters
     -----------
@@ -35,7 +32,7 @@ class SeismoGM:
     acc: 1D ArrayLike
         The acceleration time history.
     unit: str, optional, one of ('g', 'm', 'cm', 'mm', 'in', 'ft')
-        Unit of input acceleration time-history, by default "g", ignoring time unit /s2.
+        Unit of input acceleration time-history, by default “g”, ignoring time unit “/s2”.
 
     """
 
@@ -120,11 +117,11 @@ class SeismoGM:
         Parameters
         ----------
         acc : str, optional, one of ('g', 'm', 'cm', 'mm', 'in', 'ft')
-            Unit of input acceleration time-history, by default "g",  ignoring time unit /s2.
+            Unit of input acceleration time-history, by default “g”, ignoring time unit /s2.
         vel : str, optional, one of ('m', 'cm', 'mm', 'in', 'ft')
-            Unit of output velocity, by default "cm",  ignoring time unit /s.
+            Unit of output velocity, by default “cm”, ignoring time unit /s.
         disp : str, optional, one of ('m', 'cm', 'mm', 'in', 'ft')
-            Unit of output displacement, by default "cm".
+            Unit of output displacement, by default “cm”.
         verbose: bool, default=True
             Print info.
         """
@@ -146,6 +143,8 @@ class SeismoGM:
                   f"[#34bf49]disp-unit: {self.disp_unit}[/]")
 
     def plot_hist(self):
+        """Plot the time-histories.
+        """
         acc_unit_end = "" if self.acc_unit == "g" else "/$s^2$"
         vel_unit_end = "/s"
         ylabels = [
@@ -163,7 +162,7 @@ class SeismoGM:
             ax.set_ylabel(ylabels[i], fontsize=15)
             ax.tick_params(labelsize=12)
         axs[-1].set_xlabel("Time (s)", fontsize=15)
-        plt.show()
+        return axs
 
     def get_acc(self):
         """return acceleration time-history."""
@@ -190,7 +189,7 @@ class SeismoGM:
         """
         return self.acc, self.vel, self.disp
 
-    def get_truncate_hists(self, lower: float = 0.05, upper: float = 0.95):
+    def get_truncate_hists(self, lower: float = 0.05, upper: float = 0.95, return_idx: bool = False):
         """Returns the truncated time-histories for lower-upper Arias intensity.
 
         Parameters
@@ -199,10 +198,15 @@ class SeismoGM:
             Lower limit of truncation.
         upper: float, optional, default=0.95
             Upper limit of truncation.
+        return_idx: bool, optional, default=False
+            Whether return index.
 
         Returns
         -------
-        (acc, vel, disp): 1D Array like.
+        if return_idx is True:
+            Return the index.
+        else:
+            Return (acc, vel, disp): 1D Array like.
         """
         if self.Arias is None:
             _ = self.get_ia()
@@ -210,7 +214,10 @@ class SeismoGM:
         series = self.AriasSeries
         # elements of the time vector which are within the significant duration
         idx = (series >= lower * Arias) & (series <= upper * Arias)
-        return self.acc[idx], self.vel[idx], self.disp[idx]
+        if return_idx:
+            return idx
+        else:
+            return self.acc[idx], self.vel[idx], self.disp[idx]
 
     def get_ims(self, display_results: bool = False):
         """return various IMs independent of response spectra.
@@ -231,21 +238,20 @@ class SeismoGM:
         * Ia: Arias intensity;
         * Ima: Modified Arias intensity;
         * MIV: Maximum Incremental Velocity;
-        * Arms,Vrms,Drms: Root-mean-square of acceleration, velocity, and displacement;
-        * Pa,Pv,Pd: Housner earthquake power index of acceleration, velocity, and displacement;
-        * Ra,Rv,Rd: Riddell index of acceleration, velocity, and displacement;
+        * Arms, Vrms, Drms: Root-mean-square of acceleration, velocity, and displacement;
+        * Pa, Pv, Pd: Housner earthquake power index of acceleration, velocity, and displacement;
+        * Ra, Rv, Rd: Riddell index of acceleration, velocity, and displacement;
         * SED: Specific Energy Density;
         * If: Fajfar index;
         * Ic: Park-Ang Index, i.e., characteristic intensity.
         * Icm: Cosenza–Manfredi Intensity;
-        * CAV,CAD,CAI: Cumulative Absolute Velocity，Displacement and Impetus;
+        * CAV, CAD, CAI: Cumulative Absolute Velocity, Displacement and Impetus;
         * CAVstd: Standardized Cumulative Absolute Velocity;
         * Ip: Impulsivity Index;
         * Tsig_5_95: 5%-95% Arias intensity duration;
         * Tsig_5_75: 5%-75% Arias intensity duration;
         * Tbd: Bracketed duration;
         * Tud: Uniform duration.
-
         """
         pga = self.get_pga()
         pgv = self.get_pgv()
@@ -346,7 +352,7 @@ class SeismoGM:
         return d_v
 
     def get_eda(self, freq=9):
-        """EDA，Effective design acceleration,
+        """EDA: Effective design acceleration,
         defined as the peak acceleration value found after lowpass filtering the input time history
         with a cut-off frequency of 9 Hz [Benjamin and Associates, 1988].
 
@@ -441,7 +447,7 @@ class SeismoGM:
         return iv
 
     def get_miv(self):
-        """Maximum Incremental Velocity [MIV],
+        """Maximum Incremental Velocity (MIV),
         defined as the maximum value of the time integral of the acceleration between all two zero points.
         """
         if self.Arias is None:
@@ -769,8 +775,8 @@ class SeismoGM:
         Returns
         -------
         Size (len(Ts), 6) numpy array
-            Each column corresponds to acceleration Sa, velocity Sv, displacement Sd spectra,
-            yield displacement Dy, strength reduction factor Ry, and yield strength factor Cy (1/Ry).
+            Each column corresponds to ``acceleration Sa``, ``velocity Sv``, ``displacement Sd`` spectra,
+            ``yield displacement Dy``, ``strength reduction factor Ry``, and ``yield strength factor Cy (1/Ry)``.
         """
         output = const_duct_spec(
             self.dt,

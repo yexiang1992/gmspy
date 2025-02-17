@@ -17,8 +17,6 @@ import os
 import sys
 from pathlib import Path
 
-from sphinx_gallery.scrapers import matplotlib_scraper
-from sphinx_gallery.sorting import FileNameSortKey
 
 this_dir = Path(__file__).resolve().parent.parent.parent
 about = {}
@@ -31,7 +29,7 @@ sys.path.insert(0, os.path.abspath("../../"))
 # -- Project information -----------------------------------------------------
 
 project = 'gmspy'
-copyright = '2024, yexiang yan'
+copyright = '2025, yexiang yan'
 author = 'yexiang yan'
 
 # The full version, including alpha/beta/rc tags
@@ -47,7 +45,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
-    "sphinx_gallery.gen_gallery",
     'nbsphinx',
     "jupyter_sphinx",
 ]
@@ -161,7 +158,7 @@ texinfo_documents = [
 #     "first_notebook_cell": ("%matplotlib inline\n"),
 # }
 
-sphinx_gallery_conf = {
-     'examples_dirs': "../../examples/",   # path to your example scripts
-     'gallery_dirs': "sphinx_gallery_examples",  # path to where to save gallery generated output
-}
+# sphinx_gallery_conf = {
+#      'examples_dirs': "../../examples/",   # path to your example scripts
+#      'gallery_dirs': "sphinx_gallery_examples",  # path to where to save gallery generated output
+# }

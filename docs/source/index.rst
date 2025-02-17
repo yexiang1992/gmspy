@@ -22,14 +22,13 @@ It is recommended that you use `Anaconda <https://www.anaconda.com/>`_ to avoid 
    :maxdepth: 5
    :caption: Instructions
 
-   CHANGELOG
    src/intro.ipynb
 
 .. toctree::
    :maxdepth: 3
    :caption: Gallery
 
-   sphinx_gallery_examples/index
+   examples/index.ipynb
 
 
 .. toctree::
