@@ -48,8 +48,8 @@ def loadPEER(filename: Union[str, Path, None] = None, plot: bool = False) -> Nam
         file_path = Path(filename)
         file_name = file_path.stem
 
-    ends = file_name[-3:].lower()
-    if ends not in ('at2', 'vt2', 'dt2'):
+    ends = file_path.suffix.lower()
+    if ends not in ('.at2', '.vt2', '.dt2'):
         raise ValueError("Error! Not PEER database, only .AT2 is supported.!")
 
     with open(file_path, "r") as f:
