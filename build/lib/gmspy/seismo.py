@@ -246,7 +246,9 @@ class SeismoGM:
         * Ic: Park-Ang Index, i.e., characteristic intensity.
         * Icm: Cosenza–Manfredi Intensity;
         * CAV, CAD, CAI: Cumulative Absolute Velocity, Displacement and Impetus;
+        * CAV5, CAD5, CAI5: Cumulative Absolute Velocity, Displacement and Impetus estimated for ground motion time series with an acceleration cutoff of 5 cm/s^2;
         * CAVstd: Standardized Cumulative Absolute Velocity;
+        * CAVstd5: Standardized Cumulative Absolute Velocity estimated for ground motion time series with an acceleration cutoff of 5 cm/s^2;
         * Ip: Impulsivity Index;
         * Tsig_5_95: 5%-95% Arias intensity duration;
         * Tsig_5_75: 5%-75% Arias intensity duration;
@@ -270,7 +272,9 @@ class SeismoGM:
         ic = self.get_ic()
         icm = self.get_icm()
         cav, cad, cai = self.get_cavdi()
+        cav5, cad5, cai5 = self.get_cavdi5()
         cavstd = self.get_cavstd()
+        cavstd5 = self.get_cavstd5()
         ip = self.get_ip()
         tsig_5_95, _ = self.get_t_5_95()
         tsig_5_75, _ = self.get_t_5_75()
@@ -302,7 +306,11 @@ class SeismoGM:
             CAV=cav,
             CAD=cad,
             CAI=cai,
+            CAV5=cav5,
+            CAD5=cad5,
+            CAI5=cai5,
             CAVstd=cavstd,
+            CAVstd5=cavstd5,
             Ip=ip,
             Tsig_5_95=tsig_5_95,
             Tsig_5_75=tsig_5_75,
@@ -543,17 +551,69 @@ class SeismoGM:
         Icm = 2 * 9.81 * self.Arias / (np.pi * PGA * PGV)
         return Icm
 
-    def get_cavdi(self):
-        """Cumulative Absolute Velocity (CAV) ，Displacement (CAD) and Impetus(CAI)."""
-        CAV = trapezoid(np.abs(self.acc), self.time)
-        CAD = trapezoid(np.abs(self.vel), self.time)
-        CAI = trapezoid(np.abs(self.disp), self.time)
+    def get_cavdi(self, acc_cutoff_level: float = None):
+        """Cumulative Absolute Velocity (CAV) ，Displacement (CAD) and Impetus(CAI).
+        See Campbell, Kenneth W and Yousef Bozorgnia. “Use of Cumulative Absolute Velocity ( CAV ) in
+        Damage Assessment.” (2012).
+
+        Parameters
+        -------------
+        acc_cutoff_level : float, optional
+            The acceleration cutoff level, only data with abs(acc)>=a will be used.
+            Unit must be m/s2.  See ``get_cavdi5()``.
+        """
+        factors = np.zeros_like(self.acc)
+        if acc_cutoff_level is None:
+            factors += 1.0
+        else:
+            acc = self.acc * self.unit_factors[f"{self.acc_unit}-m"]  # to m/s2
+            idx = np.abs(acc) >= acc_cutoff_level
+            factors[idx] = 1.0
+        CAV = trapezoid(np.abs(self.acc) * factors, self.time)
+        CAD = trapezoid(np.abs(self.vel) * factors, self.time)
+        CAI = trapezoid(np.abs(self.disp) * factors, self.time)
         return CAV * self.vel_factor, CAD, CAI
 
-    def get_cavstd(self):
-        """Standardized Cumulative Absolute Velocity (CAVSTD) [Campbell and Bozorgnia 2011]."""
+    def get_cavdi5(self, acc_cutoff_level: float = 0.05):
+        """Bracketed Cumulative Absolute Velocity (CAV5) ，Displacement (CAD5) and Impetus(CAI5).
+        The cumulative absolute velocity estimated for ground motion time series with an acceleration
+        cutoff of 5 cm/s^2, well known as CAV5.
+        This intensity measure is very useful in geotechnical problems involving seismic actions,
+        and several references used this IM.
+
+        See Kramer SL, Mitchell RA. Ground Motion Intensity Measures for Liquefaction Hazard Evaluation.
+        Earthquake Spectra. 2006;22(2):413-438. doi:10.1193/1.2194970
+
+        Parameters
+        -------------
+        acc_cutoff_level : float, optional, default=0.05 m/s2
+            The acceleration cutoff level, only data with abs(acc)>=a will be used.
+            Unit must be m/s2.
+        """
+        return self.get_cavdi(acc_cutoff_level=acc_cutoff_level)
+
+    def get_cavstd(self, acc_cutoff_level: float = None):
+        """Standardized Cumulative Absolute Velocity (CAVSTD) [Campbell and Bozorgnia 2011].
+        See Campbell, Kenneth W and Yousef Bozorgnia. “Use of Cumulative Absolute Velocity ( CAV ) in
+        Damage Assessment.” (2012).
+
+        Parameters
+        -------------
+        acc_cutoff_level : float, optional
+            The acceleration cutoff level, only data with abs(acc)>=a will be used.
+            Unit must be m/s2.  See ``get_cavdi5()``.
+        """
         ts = np.arange(np.floor(self.time[-1]) + 1)
-        acc = self.acc / self.unit_factors[f"g-{self.acc_unit}"]
+        acc = self.acc / self.unit_factors[f"g-{self.acc_unit}"]   # to g
+
+        factors = np.zeros_like(self.acc)
+        if acc_cutoff_level is None:
+            factors += 1.0
+        else:
+            idx = np.abs(acc) >= acc_cutoff_level / 9.81   # to g
+            factors[idx] = 1.0
+        acc *= factors
+
         idxs = []
         for t in ts:
             idx = np.argmin(np.abs(self.time - t))
@@ -570,6 +630,24 @@ class SeismoGM:
             cavs.append(a * p)
         cavstd = np.sum(cavs)
         return cavstd
+
+    def get_cavstd5(self, acc_cutoff_level: float = 0.05):
+        """Bracketed Standardized Cumulative Absolute Velocity (CAVstd5).
+        The cumulative Standardized absolute velocity estimated for ground motion time series with an acceleration
+        cutoff of 5 cm/s^2, well known as CAVstd5.
+        This intensity measure is very useful in geotechnical problems involving seismic actions,
+        and several references used this IM.
+
+        See Kramer SL, Mitchell RA. Ground Motion Intensity Measures for Liquefaction Hazard Evaluation.
+        Earthquake Spectra. 2006;22(2):413-438. doi:10.1193/1.2194970
+
+        Parameters
+        -------------
+        acc_cutoff_level : float, optional, default=0.05 m/s2
+            The acceleration cutoff level, only data with abs(acc)>=a will be used.
+            Unit must be m/s2.
+        """
+        return self.get_cavstd(acc_cutoff_level=acc_cutoff_level)
 
     def get_ip(self):
         """Impulsivity Index (IP) [Panella et al., 2017].
@@ -1154,7 +1232,11 @@ def _get_ims_unit(self):
         CAV=f"{self.vel_unit}/s",
         CAD=f"{self.vel_unit}",
         CAI=f"{self.disp_unit}*s",
+        CAV5=f"{self.vel_unit}/s",
+        CAD5=f"{self.vel_unit}",
+        CAI5=f"{self.disp_unit}*s",
         CAVstd="g*s",
+        CAVstd5="g*s",
         Ip="--",
         Tsig_5_95="s",
         Tsig_5_75="s",
@@ -1187,7 +1269,11 @@ def _get_ims_unit(self):
         CAV="Cumulative Absolute Velocity",
         CAD="Cumulative Absolute Displacement",
         CAI="Cumulative Absolute Impetus",
-        CAVstd="tandardized Cumulative Absolute Velocity",
+        CAV5="Cumulative Absolute Velocity estimated for acceleration series with an cutoff of 5 cm/s^2",
+        CAD5="Cumulative Absolute Displacement estimated for acceleration series with an cutoff of 5 cm/s^2",
+        CAI5="Cumulative Absolute Impetus estimated for acceleration series with an cutoff of 5 cm/s^2",
+        CAVstd="Standardized Cumulative Absolute Velocity",
+        CAVstd5="Standardized Cumulative Absolute Velocity estimated for acceleration series with an cutoff of 5 cm/s^2",
         Ip="Impulsivity Index",
         Tsig_5_95=r"5%-95% Arias intensity duration",
         Tsig_5_75=r"5%-75% Arias intensity duration",
