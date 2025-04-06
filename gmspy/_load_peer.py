@@ -76,7 +76,7 @@ def loadPEER(filename: Union[str, Path, None] = None, plot: bool = False) -> Nam
     GM = namedtuple("GM", ["tsg", "times", "dt", "npts", "RSN", "file_name", "unit"])
 
     if plot:
-        ylabels = dict(at2="acc", vt2="vel", dt2="disp")
+        ylabels = {'.at2': 'acc', '.vt2': 'vel', '.dt2': 'disp'}
         fig, ax = plt.subplots(figsize=(9, 4))
         ax.plot(time, tsg, c='k', lw=1.2)
         ax.set_xlabel("Time (s)", fontsize=15)
