@@ -1,13 +1,19 @@
 from setuptools import find_packages, setup
+import re
+import os
 
-from gmspy import __version__
+def read_version():
+    version_file = os.path.join('gmspy', '__about__.py')
+    with open(version_file, 'r') as f:
+        content = f.read()
+    return re.search(r'__version__\s*=\s*["\'](.+?)["\']', content).group(1)
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
     name='gmspy',
-    version=__version__,
+    version=read_version(),
     description='Ground Motions Signal Processing for Python',
     long_description=long_description,
     long_description_content_type="text/markdown",
