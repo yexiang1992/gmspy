@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
-import tkinter as tk
 import numpy as np
-from tkinter import filedialog
 from pathlib import Path
 from collections import namedtuple
 from typing import Union, NamedTuple
@@ -38,6 +36,8 @@ def loadPEER(filename: Union[str, Path, None] = None, plot: bool = False) -> Nam
     See .. _collections.namedtuple: https://docs.python.org/3/library/collections.html#collections.namedtuple.
     """
     if filename is None:
+        import tkinter as tk
+        from tkinter import filedialog
         root = tk.Tk()
         root.withdraw()
         root.call("wm", "attributes", ".", "-topmost", True)
